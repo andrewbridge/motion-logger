@@ -1,19 +1,13 @@
-//Find out if the feature's available.
-    this.compatible = "none";
-    if (window.DeviceOrientationEvent) {
-        console.log("DeviceOrientation is supported");
-        this.compatible = "standards";
-    } else if (window.OrientationEvent) {
-        console.log("MozOrientation is supported");
-        this.compatible = "moz-alternative";
-    }
+init = ->
+    if (window.DeviceOrientationEvent? or window.OrientationEvent?) and typeof window.ontouchstart isnt "undefined"
+        touchrec = new TouchRecorder()
+        stream = touchrec.stream
+        motiontrck = touchrec.mtntrckr
+        dataupldr = new DataUploader('http://localhost:8080', stream)
+        window.motionTracking = {touchrec: touchrec, stream: stream, motiontrck: motiontrck, dataupldr: dataupldr}
+        true
+    else
+        console.error "This system requires a touchscreen and motion sensors in order to run correctly."
+        false
 
-    function is_touch_device() {
- return (('ontouchstart' in window)
-      || (navigator.MaxTouchPoints > 0)
-      || (navigator.msMaxTouchPoints > 0));
-}
- 
-if (!is_touch_device()) {
- document.getElementById('touchOnly').style.display='none';
-}
+document.addEventListener "DOMContentLoaded", init, false

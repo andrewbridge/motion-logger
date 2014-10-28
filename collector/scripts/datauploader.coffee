@@ -18,13 +18,42 @@ class DataUploader
 		@pingUID = NaN
 
 	start: ->
+		if not @sessionUID?
+			@getUID(@startCB.bind this)
+		else
+			@startCB()
+		true
+
+	startCB: ->
 		@pingUID = setInterval(@ping.bind(this), @pingRate)
+		true
+
+	getUID: (cb) ->
+		error = console.error.bind console, "Retrieving a UID was unsuccessful."
+		request = new XMLHttpRequest()
+		request.open 'GET', @url+"/newsession", true
+		that = this
+		request.onload = ->
+			if (request.status >= 200 && request.status < 400)
+				try
+					that.sessionUID = JSON.parse(request.responseText).id
+					cb()
+					return true
+				catch e
+					error(e)
+					return false
+			else
+				error()
+			false
+		request.onerror = error
+		request.send()
+		true
 
 	upload: ->
 		data = @stream.sweep()
 		request = new XMLHttpRequest()
-		request.open 'POST', @url, true
+		request.open 'PUT', @url+"/session/"+@sessionUID, true
 		request.setRequestHeader 'Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'
-		request.send JSON.stringify(data)
+		request.send "data="+JSON.stringify(data)
 		@ping()
 		true

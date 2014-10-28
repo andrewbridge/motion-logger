@@ -1,12 +1,28 @@
 class TouchRecorder
-	constructor: (@pingRate = 500, @stream = new Stream(), @mtntrckr = new MotionTracker(), start = true) ->
-		@recorder = @recordEvent.bind this
-		window.addEventListener "keydown", @recorder, false
-		window.addEventListener "keyup", @recorder, false
-		@pingUID = setInterval(@recorder, @pingRate, {type: "ping"})
+	constructor: (@pingRate = 500, @stream = new Stream(), @mtntrckr = new MotionTracker(), start = true, @events = "keydown keyup") ->
+		@initialiseEvents()
 		@running = start
 		if start
 			@start()
+
+	initialiseEvents: ->
+		@recorder = @recordEvent.bind this
+		@evtArr = @events.split(" ")
+		window.addEventListener evt, @recorder, false for evt in @evtArr
+		if @pingRate > 0
+			@pingUID = setInterval(@recorder, @pingRate, {type: "ping"})
+		else
+			@pingUID = NaN
+		true
+
+	destroyEvents: ->
+		if @evtArr?
+			window.removeEventListener evt, @recorder for evt in @evtArr
+			if not isNaN @pingUID
+				clearInterval @pingUID
+			true
+		else
+			false
 
 	start: ->
 		if @running?
@@ -21,10 +37,7 @@ class TouchRecorder
 			@destoryErr()
 
 	stop: ->
-		window.removeEventListener "keydown", @recorder
-		window.removeEventListener "keyup", @recorder
-		clearInterval(@pingUID)
-		delete @pingUID
+		@destroyEvents()
 		# Destroy self
 		for key, val of this
 			delete this[key]
