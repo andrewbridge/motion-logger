@@ -45,7 +45,10 @@ class TouchRecorder
 
 	recordEvent: (e) ->
 		if @running? and @running
-			@stream.add {event: e.type, datapoints: @mtntrckr.getSnapshot()}
+			streamEntry = {event: e.type, datapoints: @mtntrckr.getSnapshot()}
+			if e.keyCode? and e.keyIdentifier?
+				streamEntry.keyInfo = {code: e.keyCode, indent: e.keyIdentifier}
+			@stream.add streamEntry
 		else if not @running?
 			@destoryErr
 
