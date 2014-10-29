@@ -3,7 +3,7 @@ init = ->
         touchrec = new TouchRecorder()
         stream = touchrec.stream
         motiontrck = touchrec.mtntrckr
-        dataupldr = new DataUploader('http://localhost:8080', stream)
+        dataupldr = new DataUploader(window.location.protocol+'//'+window.location.host+':8080', stream)
         window.motionTracking = {touchrec: touchrec, stream: stream, motiontrck: motiontrck, dataupldr: dataupldr}
         true
     else
