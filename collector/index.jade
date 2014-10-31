@@ -1,6 +1,32 @@
-h1 Motion Logger
-h2 Andrew Bridge
+header
+	div
+		button(class="back") Back
+	div
+		h1 Motion Logger
+	div
+		button(class="next") Next
 
-#testarea
-	p.completionText THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890
-	input
+main(class="screens")
+	section(class="screen")
+		h2 Typing tasks
+		p.
+			This following screens will ask you to complete a number of tasks
+			involving typing.
+
+			By clicking "Agree &amp; Continue", you are agreeing to send data
+			about the way you type with your on-screen keyboard.
+
+		button(class="next") Agree &amp; Continue
+	section(class="screen")
+		h2 About you
+		form
+			label(for="email").
+				If you don't mind being e-mailed about your participation, please
+				enter your e-mail address
+			input(type="text", name="email", placeholder="bob.loblaw@example.com")
+	section(class="screen")
+		h2 About your phone
+	section(class="screen")
+		h2 Task One
+		p.completionText THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890
+		input
