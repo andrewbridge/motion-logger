@@ -1,0 +1,26 @@
+//Text
+@mixin headings {
+	font-family: $headingFont;
+	font-weight: 300;
+}
+
+//Borders
+@mixin highlightedSeparators($orientation) {
+	@if $orientation == vertical {
+		border-top: $translucentSeparator;
+		border-bottom: $translucentSeparator;
+	} @else if $orientation == horizontal {
+		border-left: $translucentSeparator;
+		border-right: $translucentSeparator;
+	}
+}
+
+//Form elements
+@mixin textButton($colour: $txt-colour) {
+	font-size: $textButtonSize;
+	font-weight: 300;
+	font-family: $headingFont;
+	color: $colour;
+	background: transparent;
+	border: none;
+}

@@ -1,0 +1,32 @@
+/*==============
+TYPOGRAPHY
+==============*/
+$baseFont: "Helvetica", sans-serif;
+$headingFont: "Lato", sans-serif;
+$textButtonSize: 1.1em;
+
+/*==============
+COLOUR
+==============*/
+//Background colours
+$bg-colour: #fff;
+$titlebar-colour: #77BF56;
+//Foreground colours
+$txt-colour: #444;
+$titlebartxt-colour: #fff;
+$prompttext-colour: blue;
+$translucentseparator-colour: rgba(255,255,255,0.3);
+
+/*==============
+BORDERS
+==============*/
+//Separators
+$translucentSeparator: 0.1em solid $translucentseparator-colour;
+
+/*==============
+DIMENSIONS
+==============*/
+$titlebar-height: 8vh;
+$screen-height: calc(100vh - #{$titlebar-height});
+$titlebar-width: auto;
+$screen-width: auto;

@@ -1,0 +1,25 @@
+header {
+	height: $titlebar-height;
+	width: $titlebar-width;
+	display: flex;
+	align-items: center;
+	background-color: $titlebar-colour;
+	nav {
+		flex-grow: 1;
+		display: flex;
+		justify-content: center;
+	}
+	.main {
+		flex-grow: 16;
+		@include highlightedSeparators(horizontal);
+	}
+}
+
+.screen, .screens {
+	height: $screen-height;
+	width: $screen-width;
+}
+
+.screen {
+	overflow-y: auto;
+}
