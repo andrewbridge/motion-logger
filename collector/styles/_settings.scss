@@ -1,21 +1,27 @@
 /*==============
 TYPOGRAPHY
 ==============*/
-$baseFont: "Helvetica", sans-serif;
-$headingFont: "Lato", sans-serif;
+$baseFont: "Roboto", sans-serif;
+$headingFont: "Roboto", sans-serif;
 $textButtonSize: 1.1em;
 
 /*==============
 COLOUR
 ==============*/
 //Background colours
-$bg-colour: #fff;
-$titlebar-colour: #77BF56;
+$bg-colour: #eee;
+$titlebar-colour: #4F7F39;
+$titlebar-underlay: #77BF56;
+$card-colour: #fff;
+$standardbutton-colour: $card-colour;
+$standardbuttonfocus-colour: rgba($titlebar-underlay, 0.7);
 //Foreground colours
 $txt-colour: #444;
 $titlebartxt-colour: #fff;
 $prompttext-colour: blue;
 $translucentseparator-colour: rgba(255,255,255,0.3);
+$textinput-colour: #4F7F39;
+
 
 /*==============
 BORDERS
@@ -24,9 +30,28 @@ BORDERS
 $translucentSeparator: 0.1em solid $translucentseparator-colour;
 
 /*==============
+SHADOWING
+==============*/
+$blockElmResting: 0 2px 5px 0 rgba(0,0,0,0.26);
+$blockElmActive: 0 12px 15px 0 rgba(0,0,0,0.24);
+$UIElmResting: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+$UIElmActive: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
+
+/*==============
 DIMENSIONS
 ==============*/
 $titlebar-height: 8vh;
+$titlebarunderlay-height: 25vh;
 $screen-height: calc(100vh - #{$titlebar-height});
-$titlebar-width: auto;
+$card-intheight: 5em;
+$card-maxheight: calc(100vh - (#{$titlebar-height} - #{$titlebarunderlay-height}));
+$titlebar-width: 100vw;
 $screen-width: auto;
+$card-width: 40em;
+
+
+/*===============
+ANIMATION TIMINGS
+===============*/
+$cardChange: 0.3s;
+$formChange: 0.3s;

@@ -1,25 +1,13 @@
 header {
 	height: $titlebar-height;
 	width: $titlebar-width;
-	display: flex;
-	align-items: center;
-	background-color: $titlebar-colour;
-	nav {
-		flex-grow: 1;
+	background-color: $titlebar-underlay;
+	padding-bottom: $titlebarunderlay-height;
+	.breadcrumb {
+		background-color: $titlebar-colour;
+		width: $titlebar-width;
+		padding: 0 1em;
 		display: flex;
-		justify-content: center;
+		align-items: center;
 	}
-	.main {
-		flex-grow: 16;
-		@include highlightedSeparators(horizontal);
-	}
-}
-
-.screen, .screens {
-	height: $screen-height;
-	width: $screen-width;
-}
-
-.screen {
-	overflow-y: auto;
 }

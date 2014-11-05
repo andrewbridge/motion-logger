@@ -1,13 +1,9 @@
 header
-	nav
-		button(class="back") Back
-	div(class="main")
+	div(class="breadcrumb")
 		h1 Motion Logger
-	nav
-		button(class="next") Next
 
 main(class="screens")
-	section(class="screen")
+	section(class="screen", data-active="true")
 		h2 Typing tasks
 		p.
 			This following screens will ask you to complete a number of tasks
@@ -29,4 +25,4 @@ main(class="screens")
 	section(class="screen")
 		h2 Task One
 		p.completionText THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890
-		input
+		input(type="text")

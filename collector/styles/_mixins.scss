@@ -1,7 +1,7 @@
 //Text
 @mixin headings {
 	font-family: $headingFont;
-	font-weight: 300;
+	font-weight: 500;
 }
 
 //Borders
@@ -23,4 +23,20 @@
 	color: $colour;
 	background: transparent;
 	border: none;
+}
+
+@mixin button($restColour: $standardbutton-colour, $activeColour: $standardbuttonfocus-colour) {
+	//border-radius: 10em;
+	border-radius: 0.2em;
+	border: none;
+	padding: 0.5em;
+	background-color: $restColour;
+	color: darken(rgba($activeColour, 1), 20%);
+	font-weight: 500;
+	outline-style: none;
+	transition: $formChange background-color ease-in-out, $formChange color ease-in-out;
+	&:hover {
+		background-color: $activeColour;
+		color: lighten(rgba($restColour,1), 20%);
+	}
 }

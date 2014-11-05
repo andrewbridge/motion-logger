@@ -7,14 +7,16 @@
  */
 
  html, body {
- 	overflow-y: hidden;
+ 	overflow: hidden;
 	height: 100%;
  }
 
 html {
-	font-family: sans-serif; /* 1 */
+	font-family: $baseFont; /* 1 */
+	font-weight: 300;
 	-ms-text-size-adjust: 100%; /* 2 */
 	-webkit-text-size-adjust: 100%; /* 2 */
+	-webkit-font-smoothing: antialiased;
 }
 
 /**
