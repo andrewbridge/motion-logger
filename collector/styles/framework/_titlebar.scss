@@ -11,3 +11,13 @@ header {
 		align-items: center;
 	}
 }
+
+@media all and (max-width: #{$card-width}) {
+	header {
+		background-color: transparent;
+		padding-bottom: #{$titlebarunderlay-height/1.5};
+		.breadcrumb {
+			border-bottom: 3px solid $titlebar-underlay;
+		}
+	}
+}

@@ -25,6 +25,23 @@
 	border: none;
 }
 
+@mixin circleButton($icon, $restColour: $circlebutton-colour, $activeColour: $circlebuttonfocus-colour) {
+	width: 3.5em;
+	height: 3.5em;
+	border-radius: 10em;
+	box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+	background-image: url($icon);
+	background-repeat: no-repeat;
+	background-color: $restColour;
+	background-size: 60%;
+	background-position: center;
+	transition: $formChange box-shadow cubic-bezier(0.4, 0, 0.2, 1);
+	&:hover, &:focus, &:active {
+		box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
+		background-color: $activeColour;
+	}
+}
+
 @mixin button($restColour: $standardbutton-colour, $activeColour: $standardbuttonfocus-colour) {
 	//border-radius: 10em;
 	border-radius: 0.2em;
@@ -35,7 +52,7 @@
 	font-weight: 500;
 	outline-style: none;
 	transition: $formChange background-color ease-in-out, $formChange color ease-in-out;
-	&:hover {
+	&:hover, &:focus, &:active {
 		background-color: $activeColour;
 		color: lighten(rgba($restColour,1), 20%);
 	}
