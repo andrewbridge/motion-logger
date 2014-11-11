@@ -1,0 +1,59 @@
+.screen {
+	width: 0;
+	min-height: 0;
+	max-height: 0;
+	border-radius: 100em;
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0 auto;
+	box-shadow: none;
+	transform: translateY(-5vh);
+	overflow: hidden;
+	opacity: 0;
+	background-color: $card-colour;
+	* {opacity: 0; max-height: 0; transition: #{$cardChange/2} opacity ease-in-out, #{$cardChange/2} max-height ease-in-out;}
+	transition: $cardChange border-radius ease-in-out,
+				$cardChange width ease-in-out,
+				$cardChange min-height ease-in-out,
+				$cardChange max-height ease-in-out,
+				$cardChange padding ease-in-out,
+				$cardChange margin ease-in-out,
+				$cardChange box-shadow ease-in-out,
+				$cardChange transform ease-in-out,
+				$cardChange overflow step-start,
+				$cardChange opacity step-end;
+	&[data-active] {
+		overflow-y: auto;
+		margin-top: 0;
+		box-shadow: $blockElmActive;
+		&, & ~ .screen {
+			border-radius: 0.1em;
+			width: $card-width;
+			min-height: $card-intheight;
+			max-height: $card-maxheight;
+			padding: 0.5em 1em;
+			margin-bottom: 1em;
+			transform: none;
+			opacity: 1;
+			* {opacity: 1; max-height: 100vh;}
+			transition: $cardChange max-height ease-in-out,
+				$cardChange margin-top ease-in-out,
+				$cardChange box-shadow ease-in-out,
+				$cardChange $cardChange transform ease-in-out,
+				$cardChange $cardChange overflow step-end,
+				$cardChange $cardChange opacity ease-in-out;
+		}
+		& ~ .screen {
+			margin-top: 1em;
+			box-shadow: $blockElmResting;
+		}
+	}
+}
+
+@media all and (max-width: #{$card-width}) {
+	.screen[data-active] {
+		&, & ~ .screen {
+			width: 100vw;
+		}
+	}
+}
