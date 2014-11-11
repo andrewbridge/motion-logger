@@ -15,6 +15,8 @@ initFrontend = ->
 	chatBox.addEventListener("enterpress", addReply, false) for chatBox in document.querySelectorAll(".conversation .chatbox")
 
 	changeTitle(document.querySelector(".screen[data-active]"))
+	window.scrollTo 0,1
+	window.scrollTo 0,0
 
 watchInput = (elm, e) ->
 	if e.target instanceof HTMLInputElement
