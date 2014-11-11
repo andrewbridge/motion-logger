@@ -70,12 +70,14 @@ addReply = (e) ->
 	eventTarget.value = ""
 	replySpace.textContent = reply
 	replySpace.className += " show"
-	parent.scroll(0,100000) #Hack
+	parent.scrollTop = parent.scrollHeight
 	nextResponse = parent.querySelector(".robot:not(.show)")
 	if nextResponse?
-		showNext = -> nextResponse.className += " show"
+		showNext = ->
+			nextResponse.className += " show"
+			parent.scrollTop = parent.scrollHeight
+			true
 		setTimeout(showNext, 1000)
-		setTimeout(parent.scrollY.bind(parent, 100000), 1200) #Hack
 	if not parent.querySelector(".tester:not(.show)")?
 		eventTarget.setAttribute("disabled", "disabled")
 		eventTarget.removeAttribute("placeholder")
