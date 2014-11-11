@@ -48,6 +48,16 @@ select {
 	text-transform: none;
 }
 
+select {
+  display: block;
+  margin: 0.5em;
+  & [disabled] {
+	background-color: transparent;
+	color: $textinputdisabled-colour;
+	border-bottom-color: $textinputdisabled-colour;
+  }
+}
+
 /**
  * 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`
  *    and `video` controls.
@@ -142,6 +152,8 @@ input[type="search"]::-webkit-search-decoration {
 }
 
 input[type="text"], input[type="number"] {
+	display: block;
+  	margin: 0.5em;
 	outline-style: none;
 	border: 0;
 	border-bottom: 0.1em solid $textinput-colour;
@@ -149,6 +161,33 @@ input[type="text"], input[type="number"] {
 	&:focus {
 		border-bottom-width: 0.2em;
 	}
+  	&[disabled] {
+		background-color: transparent;
+		border-bottom-color: $textinputdisabled-colour;
+	}
+  	&.other-field {
+	  &, &[disabled] {
+		max-height: 0;
+		transition: $formChange max-height ease-in-out, $formChange border ease-in-out;
+		border-bottom-color: transparent;
+	  }
+	  &.show {
+		max-height: 100vh;
+		border-bottom-color: $textinput-colour;
+	  }
+	}
+  	&.fullwidth {
+		width: calc(#{$card-width} - 3em);
+	}
+}
+
+
+@media all and (max-width: #{$card-width}) {
+  input[type="text"], input[type="number"] {
+  	.fullwidth {
+	  width: calc(100vw - 3em);
+	}
+  }
 }
 
 /**

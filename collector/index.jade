@@ -1,32 +1,75 @@
-div(class="nav-wrap")
+div.nav-wrap
 	header
-		div(class="breadcrumb")
+		div.breadcrumb
 			h1 Motion Logger
 	nav
-		ul(class="floating")
-			li(data-action="prev")
+		ul.floating
+			//li(data-action="prev")
 			li(data-action="next")
-main(class="screens")
-	section(class="screen", data-active="true")
+main.screens
+	section.screen(data-active="true", data-headline="Introduction")
 		h2 Typing tasks
 		p.
 			This following screens will ask you to complete a number of tasks
 			involving typing.
 
-			By clicking "Agree &amp; Continue", you are agreeing to send data
+			By clicking "Agree &amp; Continue" or continuing to the next card
+			using the navigation button, you are agreeing to send data
 			about the way you type with your on-screen keyboard.
 
-		button(class="next") Agree &amp; Continue
-	section(class="screen")
+		button(data-action="next start") Agree &amp; Continue
+	section.screen(data-headline="About You")
 		h2 About you
-		form
-			label(for="email").
-				If you don't mind being e-mailed about your participation, please
-				enter your e-mail address
-			input(type="text", name="email", placeholder="bob.loblaw@example.com")
-	section(class="screen")
-		h2 About your phone
-	section(class="screen")
+		label(for="email").
+			If you don't mind being e-mailed about your participation, please
+			enter your e-mail address:
+		input(type="text", name="email", placeholder="bob.loblaw@example.com")
+		label(for="typerType") What type of touchscreen typer are you?
+		select(name="typerType", id="typerType")
+			option(value="single") Single Finger Stabber
+			option(value="twohand") Two Handed Thumber
+			option(value="onehand") One Handed Thumber
+			option(value="desktyper") Desk Typer
+	section.screen(data-headline="Your Device")
+		h2 About your device
+		label(for="deviceType") What type of device are you using?
+		select(name="deviceType", id="deviceType")
+			option Mobile Phone
+			option Tablet
+			option Touchscreen Laptop
+			option Other
+		label(for="keyboardChoice") Which keyboard are you using?
+		select(name="keyboardChoice", id="keyboardChoice")
+			option(value="stock") The keyboard my device gave me
+			option(value="swiftkey") SwiftKey
+			option(value="flexsy") Flexsy
+			option(value="minuum") Minuum
+			option(value="swype") Swype
+			option(value="other") Other
+		input(type="text", placeholder="Enter your keyboard choice", class="other-field", data-for="keyboardChoice", size="29")
+	section.screen(data-headline="Pressing Everything")
 		h2 Task One
-		p.completionText THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG'S BACK 1234567890
-		input(type="text")
+		p.completionText The quick brown fox jumped over the lazy dog's back 1234567890
+		input.fullwidth(type="text")
+	section.screen(data-headline="Natural Typing")
+		h2 Task Two
+		p Please have a short conversation with this robot (it isn't very clever!)
+		div.conversation
+			p.robot.show Hello, I'm Robot, what's your name?
+			p.tester
+			p.robot Nice name! How are you today?
+			p.tester
+			p.robot Well, I'm not feeling bad either! What are your plans for the day?
+			p.tester
+			p.robot Sorry, got to go do robot stuff! Bye!
+			input.chatbox.fullwidth(type="text", placeholder="Reply...")
+	section.screen(data-headline="Saying Goodbye")
+		h2 Task Three
+		p.
+			That's everything, all that's left to do is say goodbye to the Robot,
+			say it however you like, but make sure you capitalise his name!
+		input.fullwidth(type="text", placeholder="Goodbye Robot!")
+	section.screen
+		h2 Thank you!
+		p You're all done, thank you for taking part in this research project.
+		p You can close this window now.

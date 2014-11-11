@@ -5,6 +5,9 @@ class TouchRecorder
 		if start
 			@start()
 
+	deconstructor: ->
+		@stop()
+
 	initialiseEvents: ->
 		@recorder = @recordEvent.bind this
 		@evtArr = @events.split(" ")

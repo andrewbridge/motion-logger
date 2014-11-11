@@ -23,6 +23,7 @@ $titlebartxt-colour: #fff;
 $prompttext-colour: blue;
 $translucentseparator-colour: rgba(255,255,255,0.3);
 $textinput-colour: #4F7F39;
+$textinputdisabled-colour: #f8f8ff;
 
 
 /*==============
@@ -46,7 +47,7 @@ $titlebar-height: 8vh;
 $titlebarunderlay-height: 25vh;
 $screen-height: calc(100vh - #{$titlebar-height});
 $card-intheight: 5em;
-$card-maxheight: calc(100vh - (#{$titlebar-height} - #{$titlebarunderlay-height}));
+$card-maxheight: calc(100vh - (#{$titlebarunderlay-height - $titlebar-height}));
 $titlebar-width: 100vw;
 $screen-width: auto;
 $card-width: 40em;

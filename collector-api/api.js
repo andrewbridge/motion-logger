@@ -39,13 +39,13 @@ function init() {
 		.use(restify.fullResponse())
 		.use(restify.bodyParser())
 
-	server.get('/newsession', function(req, res, next) {
+	server.post('/newsession', function(req, res, next) {
 		subjSave.create({ subjectCreation: new Date().getTime() }, function(saveErr, savedObject) {
 			if (saveErr) return next(new restify.InvalidArgumentError(JSON.stringify(saveErr.errors)));
 
 			var shasum = crypto.createHash('sha1');
 			shasum.update(savedObject._id+chance.string({length: 20}), 'utf-8');
-			subjSave.update({ _id: savedObject._id, hash: shasum.digest('hex')}, function(updateErr, updatedObject) {
+			subjSave.update({ _id: savedObject._id, hash: shasum.digest('hex'), clientEnvironment: req.params.clientEnvr}, function(updateErr, updatedObject) {
 				if (updateErr) return next(new restify.InvalidArgumentError(JSON.stringify(updateErr.errors)));
 					console.log(updatedObject);
 

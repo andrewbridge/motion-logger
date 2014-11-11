@@ -4,6 +4,11 @@ class Stream
 		@startTime = new Date().getTime()
 		@add({event: "start", startTime: @startTime})
 
+	deconstructor: ->
+		@endTime = new Date().getTime()
+		@add({event: "finish", endTime: @endTime})
+		@add = -> false
+
 	add: (entryData) ->
 		time = new Date().getTime()
 		diff = time - @startTime

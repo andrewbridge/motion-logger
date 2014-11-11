@@ -1,0 +1,18 @@
+.screen .conversation {
+  .robot:before {
+    content: "Robot: ";
+    font-weight: bold;
+  }
+  .tester:before {
+    content: "You: ";
+    font-weight: bold;
+  }
+  .robot, .tester {
+    max-height: 0;
+    transition: $formChange max-height ease-in-out;
+    overflow: hidden;
+    &.show {
+      max-height: 100vh;
+    }
+  }
+}
