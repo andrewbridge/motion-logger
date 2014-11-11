@@ -70,9 +70,12 @@ addReply = (e) ->
 	eventTarget.value = ""
 	replySpace.textContent = reply
 	replySpace.className += " show"
+	parent.scrollMaxY();
 	nextResponse = parent.querySelector(".robot:not(.show)")
 	if nextResponse?
-		showNext = -> nextResponse.className += " show"
+		showNext = ->
+			nextResponse.className += " show"
+			parent.scrollMaxY()
 		setTimeout(showNext, 1000)
 	if not parent.querySelector(".tester:not(.show)")?
 		eventTarget.setAttribute("disabled", "disabled")
