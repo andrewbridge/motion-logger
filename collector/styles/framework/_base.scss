@@ -29,16 +29,6 @@ body {
 	color: $txt-colour;
 }
 
-span.separator:before {
-  background: no-repeat url("../images/separator.svg") right center;
-  background-size: contain;
-  content: '\00a0';
-  //float: left;
-  height: 64px;
-  margin: 0 .5em 0 .4em;
-  width: .4em;
-}
-
 /* HTML5 display definitions
 	 ========================================================================== */
 

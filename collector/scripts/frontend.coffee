@@ -42,12 +42,10 @@ changeSlide = (direction) ->
 
 changeTitle = (screen) ->
 	headline = screen.getAttribute("data-headline")
-	h1 = document.querySelector("h1")
 	if headline?
-		h1.innerHTML = "Motion Logger <span class='separator'>"+headline+"</span>"
+		document.title = "Motion Logger > "+headline
 	else
-		h1.textContent = "Motion Logger"
-	document.title = h1.textContent.replace("Motion Logger", "Motion Logger >")
+		document.title = "Motion Logger"
 	true
 
 smartSelect = (e) ->
