@@ -31,13 +31,13 @@ class TouchRecorder
 		if @running?
 			@running = true
 		else
-			@destoryErr()
+			@destroyErr()
 
 	pause: ->
 		if @running?
 			@running = false
 		else
-			@destoryErr()
+			@destroyErr()
 
 	stop: ->
 		@destroyEvents()
@@ -52,8 +52,13 @@ class TouchRecorder
 			if e.keyCode? and e.keyIdentifier?
 				streamEntry.keyInfo = {code: e.keyCode, indent: e.keyIdentifier}
 			@stream.add streamEntry
+			# Add an aftershock for detailed second readings of logged events
+			if e instanceof Event and e.type is not "aftershock"
+				e.type = "aftershock"
+				for i in [1..3]
+					setTimeout(@recorder, 50*i, e)
 		else if not @running?
-			@destoryErr
+			@destroyErr
 
-	destoryErr: ->
+	destroyErr: ->
 		console.error "This instance of TouchRecorder has been destroyed, please create a new instance."

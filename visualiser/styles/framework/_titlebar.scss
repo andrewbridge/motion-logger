@@ -1,0 +1,19 @@
+header {
+  height: $titlebar-height;
+  width: $titlebar-width;
+  background-color: $titlebar-underlay;
+  padding-bottom: $titlebarunderlay-height;
+  .bar {
+    background-color: $titlebar-colour;
+    width: $titlebar-width;
+    padding: 0 1em;
+    display: flex;
+    align-items: center;
+  }
+}
+
+@media #{$smallHeight} {
+  header {
+    height: 43px;
+  }
+}
