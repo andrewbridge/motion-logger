@@ -12,7 +12,10 @@
                                    given values were taken.
                   If the function returns false, animation ends.
   @param drawer   A function which takes an object with the same properties as the datafeed
-                  returns as a parameter and the time elapsed as another and returns nothing.
+                  plus a current timestamp and a boolean representing whether the given
+                  points are feed values (true) or tween values (false), in order to
+                  distinguish between the real data. Returns as a parameter and the time
+                  elapsed as another and returns nothing.
   @param autostart A boolean as to whether animation should begin as soon as the constructor
                    finishes. Default true
   @param speed     A number representing the speed that the animation should run at. Lower than
@@ -24,8 +27,10 @@ class Animator
       console.error "A datafeed and drawer function must be specified."
       return false
     # Collect all the browser prefixed versions into one variable
-    @raf = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame
+    @raf = window.requestAnimationFrame.bind(window) || window.mozRequestAnimationFrame.bind(window) || window.webkitRequestAnimationFrame.bind(window) || window.msRequestAnimationFrame.bind(window)
     @oldData = {values: [], time: -1}
+    #@oldData = @datafeed()
+    @curData = {values: [], time: -1}
     @newData = {values: [], time: -1}
     if @autostart
       @start()
@@ -33,6 +38,7 @@ class Animator
       @stop()
 
   animate: (lastAnimTime) ->
+    #console.log lastAnimTime
     # Get the current time
     time = @currentTimeElapsed()
 
@@ -40,25 +46,29 @@ class Animator
     timeDiff = time - lastAnimTime
 
     # Get the new log of data if required
-    if @newData.timeElapsed < time
+    if @newData.time < time
+      console.log((@newData.time - time) / timeDiff)
       @oldData = @newData
+      @curData = @oldData
       @newData = @datafeed()
-      if @newData
-        stop()
-        return false
+      console.log(@oldData, @newData, (@newData.time - time) / timeDiff)
+      if @newData is false
+        @stop()
 
     # Run through each value, find the number of frames left and calculate the required change this time round
+    # TODO: Calculate using the speed variable
     i = 0
-    timeLeft = (@newData.time - @oldData.time) / timeDiff # The number of frames left to complete the transition
+    timeLeft = (@newData.time - time) / timeDiff # The number of frames left to complete the transition
     for val in @newData.values
-      oldVal = (@oldData.values[i]||0)
+      oldVal = (@curData.values[i]||0)
       dist = val - oldVal
       valChange = dist / timeLeft
-      @oldData.values[i] = oldVal + valChange
+      @curData.values[i] = oldVal + valChange
       i++
 
     # Pass the time difference to the drawer
-    @drawer @oldData time
+    keyFrame = if Math.floor(Math.abs(timeLeft)) is 0 then true else false
+    @drawer @curData, time, keyFrame
 
     # Check to see if the square is at the edge
     if @running

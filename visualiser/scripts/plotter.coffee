@@ -10,11 +10,10 @@
                    property for each value of the graph.
   @param cumulativeRender Whether to remove previously drawn points when
                           drawing new ones.
-  @param axis The number of axis to render, between 1 and 3
   @param showTime Whether to render the time.
 ###
 class Plotter
-  constructor: (canvas, @valRanges, @cumulativeRender = false, @axis = 3, @showTime = false) ->
+  constructor: (canvas, @valRanges, @cumulativeRender = false, @showTime = false) ->
     if typeof canvas is "string"
       @canvas = document.querySelector(canvas)
     else if canvas instanceof HTMLCanvasElement
@@ -27,14 +26,16 @@ class Plotter
       @context = @canvas.getContext "2d"
       @width = @canvas.width
       @height = @canvas.height
-      @initLineStyles()
+      @axis = 2
+      @initStyles()
 
     @valRanges = @valRanges.splice(0, @axis)
 
-    @drawAxis()
+    #@drawAxes()
+    @pathInProg = false
 
   initStyles: ->
-    @context.lineWidth = 3
+    @context.lineWidth = 1
     @context.lineCap = "round"
     @context.strokeStyle = "#000"
     @graphPadding = 10
@@ -48,7 +49,9 @@ class Plotter
       # x axis
       xOrigin = @findOrigin @valRanges[0]
       yOrigin = @findOrigin @valRanges[1]
-      @context.beginPath()
+      @drawAxis(@valRanges[0], 0 + @graphPadding, @height - @graphPadding - @numIndicHeight)
+      #y axis
+      @drawAxis(@valRanges[1], 0 + @graphPadding, @height - @graphPadding - @numIndicHeight)
 
   drawAxis: (valRange, startx, starty) ->
     halfIndic = (@numIndicHeight/2)
@@ -73,8 +76,18 @@ class Plotter
     @context.lineTo(xPos, yPos)
     @context.closePath()
 
-  plotPoint: (pointsObj, timeElapsed) ->
+  plotPoint: (pointsObj, timeElapsed, isKeyFrame) ->
     # Redraw the required points
+    if not @pathInProg
+      @context.beginPath()
+      @pathInProg = true
+      @context.moveTo(pointsObj.values[0], pointsObj.values[1])
+    else
+      @context.lineTo(pointsObj.values[0], pointsObj.values[1])
+    if isKeyFrame
+      @context.fillRect(pointsObj.values[0]-5, pointsObj.values[1]-5, 10, 10)
+      @context.moveTo(pointsObj.values[0], pointsObj.values[1])
+    @context.stroke()
 
   findOrigin: (valRange) ->
     range = @findRange valRange

@@ -6,10 +6,9 @@
 
 ###
 class Sky
-	constructor: (streamObj) ->
-		@store = []
-		@startTime = new Date().getTime()
-		@add({event: "start", startTime: @startTime})
+	constructor: (streamArr) ->
+		@store = streamArr
+		@startTime = @store[0].data.startTime
 
 	deconstructor: ->
 		@endTime = new Date().getTime()
