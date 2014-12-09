@@ -32,6 +32,8 @@ class Animator
     #@oldData = @datafeed()
     @curData = {values: [], time: -1}
     @newData = {values: [], time: -1}
+    @realTime = new Date().getTime()
+    @timeElapsed = 0;
     if @autostart
       @start()
     else
@@ -55,23 +57,22 @@ class Animator
       if @newData is false
         @stop()
 
-    # Run through each value, find the number of frames left and calculate the required change this time round
-    # TODO: Calculate using the speed variable
-    i = 0
-    timeLeft = (@newData.time - time) / timeDiff # The number of frames left to complete the transition
-    for val in @newData.values
-      oldVal = (@curData.values[i]||0)
-      dist = val - oldVal
-      valChange = dist / timeLeft
-      @curData.values[i] = oldVal + valChange
-      i++
-
-    # Pass the time difference to the drawer
-    keyFrame = if Math.floor(Math.abs(timeLeft)) is 0 then true else false
-    @drawer @curData, time, keyFrame
-
-    # Check to see if the square is at the edge
+    # Check to see if the animation is still running.
     if @running
+      # Run through each value, find the number of frames left and calculate the required change this time round
+      i = 0
+      timeLeft = (@newData.time - time)  / timeDiff # The number of frames left to complete the transition
+      for val in @newData.values
+        oldVal = (@curData.values[i]||0)
+        dist = val - oldVal
+        valChange = dist / timeLeft
+        @curData.values[i] = oldVal + valChange
+        i++
+
+      # Pass the time difference to the drawer
+      keyFrame = if Math.floor(Math.abs(timeLeft)) is 0 then true else false
+      @drawer @curData, time, keyFrame
+
       # Request a new frame and call this function again
       @raf(@animate.bind(this, time))
       true
@@ -79,7 +80,13 @@ class Animator
       false
 
   currentTimeElapsed: ->
-    new Date().getTime() - @startTime
+    newTimeElapsed = new Date().getTime() - @startTime
+    oldTimeElapsed = @realTime - @startTime
+    @realTime = new Date().getTime()
+    timeDiff = newTimeElapsed - oldTimeElapsed
+    @timeElapsed += timeDiff * @speed
+    @timeElapsed
+
 
   start: ->
     @running = true

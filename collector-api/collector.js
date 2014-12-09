@@ -65,7 +65,8 @@ exports.init = function() {
             } catch (e) {
                 return next(new that.restify.InvalidArgumentError('The data provided was corrupted.'));
             }
-            subjSave.findOne({hash: req.params.hash}, function (findErr, subj) {
+            var hash = req.params.hash.replace(/[^a-zA-Z0-9!@#$%^&*()]/g, "").substring(0, 40);
+            subjSave.findOne({hash: hash}, function (findErr, subj) {
                 if (findErr) return next(new that.restify.InvalidArgumentError(JSON.stringify(findErr.errors)));
 
                 subjSave.update({
