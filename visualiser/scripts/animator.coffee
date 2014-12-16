@@ -70,7 +70,7 @@ class Animator
         i++
 
       # Pass the time difference to the drawer
-      keyFrame = if Math.floor(Math.abs(timeLeft)) is 0 then true else false
+      keyFrame = if timeLeft <= 0 then true else false
       @drawer @curData, time, keyFrame
 
       # Request a new frame and call this function again

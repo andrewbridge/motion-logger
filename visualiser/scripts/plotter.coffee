@@ -81,12 +81,12 @@ class Plotter
     if not @pathInProg
       @context.beginPath()
       @pathInProg = true
-      @context.moveTo(pointsObj.values[0], pointsObj.values[1])
+      @context.moveTo(pointsObj.values[0]-@valRanges[0].min, pointsObj.values[1]-@valRanges[1].min)
     else
-      @context.lineTo(pointsObj.values[0], pointsObj.values[1])
+      @context.lineTo(pointsObj.values[0]-@valRanges[0].min, pointsObj.values[1]-@valRanges[1].min)
     if isKeyFrame
-      @context.fillRect(pointsObj.values[0]-5, pointsObj.values[1]-5, 10, 10)
-      @context.moveTo(pointsObj.values[0], pointsObj.values[1])
+      @context.fillRect(pointsObj.values[0]-@valRanges[0].min-5, pointsObj.values[1]-@valRanges[1].min-5, 10, 10)
+      @context.moveTo(pointsObj.values[0]-@valRanges[0].min, pointsObj.values[1]-@valRanges[1].min)
     @context.stroke()
 
   findOrigin: (valRange) ->

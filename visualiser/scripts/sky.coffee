@@ -15,7 +15,7 @@ class Sky
 		@add({event: "finish", endTime: @endTime})
 		@add = -> false
 
-	get: (index) -> @store[index]
+	get: (index) -> if index < @store.length then @store[index] else false
 
 	pick: (index) -> if index >= @store.length then (@store.pop()||false) else (@store.splice(index, 1)||false)
 

@@ -16,9 +16,9 @@ init = ->
           graph.stream = data;
           # Initialise the plotter
           # Don't use that string selector in production!
-          graph.plotter = new Plotter("canvas", [{min: 0, max: 180}, {min: 0, max: 180}])
+          graph.plotter = new Plotter "canvas", getRange(graph.stream)
           # Initialise the animator
-          graph.animator = new Animator quickPick, graph.plotter.plotPoint.bind(graph.plotter)
+          graph.animator = new Animator quickPick.bind(window, graph.stream), graph.plotter.plotPoint.bind(graph.plotter)
     , alert.bind(window))
 
 
@@ -26,13 +26,29 @@ init = ->
 
 document.addEventListener "DOMContentLoaded", init, false
 
-# Dummy drawer function
-quickPick = ->
-    val = window.graph.stream.pick(0)
-    console.log val
+quickPick = (stream) ->
+    val = stream.pick(0)
     if val
-        while (val[0].data.event == "start")
-            val = window.graph.stream.pick(0)
+        while (val[0].data.event == "start" || val[0].data.event == "finish")
+            val = stream.pick(0)
         {values: [val[0].data.datapoints.orientation.x, val[0].data.datapoints.orientation.y], time: val[0].time}
     else
         false
+
+getRange = (stream) ->
+  lowest = {x: 0, y: 0}
+  highest = {x: 0, y: 0}
+  i = 0
+  val = stream.get(i)
+  while(val)
+    if val.data.event isnt "start" and val.data.event isnt "finish"
+      x = val.data.datapoints.orientation.x
+      y = val.data.datapoints.orientation.y
+      console.log x, y
+      lowest.x = if x < lowest.x then x else lowest.x
+      lowest.y = if y < lowest.y then y else lowest.y
+      highest.x = if x > highest.x then x else highest.x
+      highest.y = if y > highest.y then y else highest.y
+    i++
+    val = stream.get(i)
+  [{min: lowest.x, max: highest.x}, {min: lowest.y, max: highest.y}]
