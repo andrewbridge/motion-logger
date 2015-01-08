@@ -15,6 +15,8 @@ apocalypseNow = ->
     window.motionTracking.motiontrck.deconstructor()
     window.motionTracking.stream.deconstructor()
     window.motionTracking.dataupldr.deconstructor()
+    window.apocalypseNow = ->
+        false
     true
 
 document.addEventListener "DOMContentLoaded", initDataFeed, false
