@@ -84,6 +84,10 @@ checkForNext = (direction, e) ->
 
 checkForEnd = (e) ->
 	if e.target.getAttribute("data-action").indexOf("stop") isnt -1
+		streamEntry = {event: "formdata", formData: {}}
+		for formDataElm in document.querySelectorAll(".formData")
+			streamEntry.formData[formDataElm.name] = if (formDataElm.tagName is "SELECT") then formDataElm.selectedIndex else formDataElm.value
+		window.motionTracking.stream.add streamEntry
 		apocalypseNow()
 		window.close()
 		for prompt in document.querySelectorAll(".endPrompt")
