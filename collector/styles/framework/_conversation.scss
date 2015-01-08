@@ -17,4 +17,14 @@
       margin: 1em 0;
     }
   }
+  .chatbox {
+    display: inline;
+    width: calc(40em - 3em - 53px);
+    @media all and (max-width: #{$card-width}) {
+      width: calc(100vw - 3em - 53px);
+    }
+  }
+  .chatbox + button {
+    width: 53px;
+  }
 }

@@ -8,6 +8,7 @@ initFrontend = ->
 	button.addEventListener("click", changeSlide.bind(window, "next", progressionRequirements), false) for button in document.querySelectorAll("[data-action*=\"next\"]")
 	button.addEventListener("click", changeSlide.bind(window, "prev", progressionRequirements), false) for button in document.querySelectorAll("[data-action*=\"prev\"]")
 	document.querySelector("nav [data-action*=\"next\"]").addEventListener("click", checkForEnd.bind(window), false)
+	button.addEventListener("click", addReply.bind(window), false) for button in document.querySelectorAll(".conversation button")
 	select.addEventListener("change", smartSelect, false) for select in document.querySelectorAll("select")
 	if window.motionTracking?
 		button.addEventListener("click", window.motionTracking.dataupldr.start.bind(window.motionTracking.dataupldr), false) for button in document.querySelectorAll("[data-action*=\"start\"]")
@@ -84,7 +85,7 @@ checkForNext = (direction, e) ->
 checkForEnd = (e) ->
 	if e.target.getAttribute("data-action").indexOf("stop") isnt -1
 		apocalypseNow()
-		console.log "it is done"
+		window.close()
 	else if e.target.getAttribute("data-disabled") is "disabled"
 		e.target.setAttribute("data-action", e.target.getAttribute("data-action")+" stop")
 
@@ -110,7 +111,7 @@ smartSelect = (e) ->
 				otherField.className = otherField.className.replace /( show | show|show |show)/g, ""
 
 addReply = (e) ->
-	eventTarget = e.target
+	eventTarget = if (e.target.tagName == "BUTTON") then e.target.previousSibling else e.target
 	parent = eventTarget.parentNode
 	reply = eventTarget.value
 	if reply.length > 0
@@ -132,6 +133,7 @@ addReply = (e) ->
 			setTimeout(showNext, 1000)
 		if not parent.querySelector(".tester:not(.show):not(.seen)")?
 			eventTarget.setAttribute("disabled", "disabled")
+			eventTarget.nextSibling.setAttribute("disabled", "disabled")
 			setTimeout(->
 				eventTarget.setAttribute("placeholder", "Robot is offline, continue to the next task.")
 			, 1000)
