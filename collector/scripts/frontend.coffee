@@ -86,6 +86,8 @@ checkForEnd = (e) ->
 	if e.target.getAttribute("data-action").indexOf("stop") isnt -1
 		apocalypseNow()
 		window.close()
+		for prompt in document.querySelectorAll(".endPrompt")
+			prompt.style.display = "block"
 	else if e.target.getAttribute("data-disabled") is "disabled"
 		e.target.setAttribute("data-action", e.target.getAttribute("data-action")+" stop")
 
