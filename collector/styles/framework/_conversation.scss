@@ -9,10 +9,12 @@
   }
   .robot, .tester {
     max-height: 0;
-    transition: $formChange max-height ease-in-out;
+    transition: $formChange max-height ease-in-out, $formChange margin ease-in-out;
     overflow: hidden;
+    margin: 0;
     &.show {
       max-height: 100vh;
+      margin: 1em 0;
     }
   }
 }

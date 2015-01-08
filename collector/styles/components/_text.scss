@@ -84,3 +84,8 @@ h2 {
   content: attr(data-tobecompleted);
   color: $prompttext-colour;
 }
+
+.errorEm[data-error="true"] {
+  font-weight: bold;
+  font-style: italic;
+}

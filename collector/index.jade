@@ -49,11 +49,12 @@ main.screens
 		input(type="text", placeholder="Enter your keyboard choice", class="other-field", data-for="keyboardChoice", size="29")
 	section.screen(data-headline="Pressing Everything")
 		h2 Task One
+		p.errorEm Please begin testing by typing the following words.
 		p.completionText The quick brown fox jumped over the lazy dog's back 1234567890
-		input.fullwidth(type="text")
+		input.fullwidth(type="text", placeholder="Type here...")
 	section.screen(data-headline="Natural Typing")
 		h2 Task Two
-		p Please have a short conversation with this robot (it isn't very clever!)
+		p.errorEm Please have a short conversation with this robot (it isn't very clever!)
 		div.conversation
 			p.robot.show Hello, I'm Robot, what's your name?
 			p.tester
@@ -67,9 +68,9 @@ main.screens
 		h2 Task Three
 		p.
 			That's everything, all that's left to do is say goodbye to the Robot,
-			say it however you like, but make sure you capitalise his name!
+			say it however you like, but <span class="errorEm">make sure you capitalise his name!</span>
 		input.fullwidth(type="text", placeholder="Goodbye Robot!")
 	section.screen
 		h2 Thank you!
 		p You're all done, thank you for taking part in this research project.
-		p You can close this window now.
+		p Press the tick to complete the session.

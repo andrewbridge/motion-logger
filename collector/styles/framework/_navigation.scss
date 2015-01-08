@@ -17,11 +17,11 @@ nav {
 			&:last-child {
 				margin-bottom: 0;
 			}
-			&[data-action="prev"], &.prev {
-				@include circleButton("../../images/arrow-up.svg");
+			&[data-action*="prev"], &.prev {
+				@include circleButton("../../images/arrow-up.svg", "../../images/check.svg", "[data-disabled]");
 			}
-			&[data-action="next"], &.next {
-				@include circleButton("../../images/arrow-down.svg");
+			&[data-action*="next"], &.next {
+				@include circleButton("../../images/arrow-down.svg", "../../images/check.svg", "[data-disabled]");
 			}
 		} 
 	}

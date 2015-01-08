@@ -17,6 +17,8 @@ $standardbutton-colour: $card-colour;
 $standardbuttonfocus-colour: rgba($titlebar-underlay, 0.7);
 $circlebutton-colour: #6F75CA;
 $circlebuttonfocus-colour: lighten($circlebutton-colour, 10%);
+$circlebuttondone-colour: $titlebar-underlay;
+$circlebuttondonefocus-colour: lighten($circlebuttondone-colour, 10%);
 //Foreground colours
 $txt-colour: #444;
 $titlebartxt-colour: #fff;

@@ -5,8 +5,9 @@ initFrontend = ->
 		elm.setAttribute("data-tobecompleted", elm.textContent)
 		elm.textContent = ""
 		input.addEventListener("keyup", watchInput.bind(null, elm), false)
-	button.addEventListener("click", changeSlide.bind(window, "next"), false) for button in document.querySelectorAll("[data-action*=\"next\"]")
-	button.addEventListener("click", changeSlide.bind(window, "prev"), false) for button in document.querySelectorAll("[data-action*=\"prev\"]")
+	button.addEventListener("click", changeSlide.bind(window, "next", progressionRequirements), false) for button in document.querySelectorAll("[data-action*=\"next\"]")
+	button.addEventListener("click", changeSlide.bind(window, "prev", progressionRequirements), false) for button in document.querySelectorAll("[data-action*=\"prev\"]")
+	document.querySelector("nav [data-action*=\"next\"]").addEventListener("click", checkForEnd.bind(window), false)
 	select.addEventListener("change", smartSelect, false) for select in document.querySelectorAll("select")
 	if window.motionTracking?
 		button.addEventListener("click", window.motionTracking.dataupldr.start.bind(window.motionTracking.dataupldr), false) for button in document.querySelectorAll("[data-action*=\"start\"]")
@@ -17,6 +18,29 @@ initFrontend = ->
 	changeTitle(document.querySelector(".screen[data-active]"))
 	window.scrollTo 0,1
 
+progressionRequirements = [
+	(elm) ->
+		true
+,
+	(elm) ->
+		true
+,
+	(elm) ->
+		true
+,
+	(elm) ->
+		elm.querySelector("p.completionText").getAttribute("data-tobecompleted").length is 0
+,
+	(elm) ->
+		elm.querySelector(".conversation p:not(.show):not(.seen)") is null
+,
+	(elm) ->
+		elm.querySelector("input").value.indexOf("Robot") isnt -1
+,
+	(elm) ->
+		false
+]
+
 watchInput = (elm, e) ->
 	if e.target instanceof HTMLInputElement
 		input = e.target
@@ -25,21 +49,44 @@ watchInput = (elm, e) ->
 			elm.textContent = input.value
 			elm.setAttribute("data-tobecompleted", wholeText.substring(input.value.length))
 
-changeSlide = (direction) ->
+getNextSlide = (direction, current = document.querySelector(".screen[data-active]")) ->
+	if (direction is "next" or direction is "down") and current.nextSibling
+		newSlide = current.nextSibling
+	else if (direction is "prev" or direction is "up") and current.previousSibling
+		newSlide = current.previousSibling
+	newSlide
+
+changeSlide = (direction, requirementsArr, e) ->
+	ret = false
 	current = document.querySelector(".screen[data-active]")
 	if current
-		if (direction is "next" or direction is "down") and current.nextSibling
-			newSlide = current.nextSibling
-		else if (direction is "prev" or direction is "up") and current.previousSibling
-			newSlide = current.previousSibling
-		if newSlide?
+		newSlide = getNextSlide(direction, current)
+		if newSlide? and ((requirementsArr? and requirementsArr[elmIndex(current)](current)) or not requirementsArr?)
 			current.removeAttribute("data-active")
 			ctrl.setAttribute("disabled", "disabled") for ctrl in current.querySelectorAll("button, input, select")
 			newSlide.setAttribute("data-active", "true")
 			ctrl.removeAttribute("disabled") for ctrl in newSlide.querySelectorAll("button, input, select")
 			changeTitle(newSlide)
-		true
-	false
+			ret = true
+		else if requirementsArr? and not requirementsArr[elmIndex(current)](current)
+			current.querySelector(".errorEm").setAttribute("data-error", "true")
+	if e?
+		checkForNext(direction, e)
+	ret
+
+checkForNext = (direction, e) ->
+	newSlide = getNextSlide(direction)
+	e.target.removeAttribute("data-disabled")
+	if not newSlide?
+		e.target.setAttribute("data-disabled", "disabled")
+	true
+
+checkForEnd = (e) ->
+	if e.target.getAttribute("data-action").indexOf("stop") isnt -1
+		apocalypseNow()
+		console.log "it is done"
+	else if e.target.getAttribute("data-disabled") is "disabled"
+		e.target.setAttribute("data-action", e.target.getAttribute("data-action")+" stop")
 
 changeTitle = (screen) ->
 	headline = screen.getAttribute("data-headline")
@@ -66,22 +113,36 @@ addReply = (e) ->
 	eventTarget = e.target
 	parent = eventTarget.parentNode
 	reply = eventTarget.value
-	replySpace = parent.querySelector(".tester:not(.show)")
-	eventTarget.value = ""
-	replySpace.textContent = reply
-	replySpace.className += " show"
-	parent.scrollTop = parent.scrollHeight
-	nextResponse = parent.querySelector(".robot:not(.show)")
-	if nextResponse?
-		showNext = ->
-			nextResponse.className += " show"
-			parent.scrollTop = parent.scrollHeight
-			true
-		setTimeout(showNext, 1000)
-	if not parent.querySelector(".tester:not(.show)")?
-		eventTarget.setAttribute("disabled", "disabled")
-		eventTarget.removeAttribute("placeholder")
-	true
+	if reply.length > 0
+		replySpace = parent.querySelector(".tester:not(.show):not(.seen)")
+		eventTarget.value = ""
+		replySpace.textContent = reply
+		replySpace.className += " show"
+		parent.scrollTop = parent.scrollHeight
+		nextResponse = parent.querySelector(".robot:not(.show):not(.seen)")
+		if nextResponse?
+			showNext = ->
+				nextResponse.className += " show"
+				parent.scrollTop = parent.scrollHeight
+				while parent.querySelectorAll(".show").length > 2
+					showing = parent.querySelector(".show")
+					showing.className = showing.className.replace /( show | show|show |show)/g, ""
+					showing.className += " seen"
+				true
+			setTimeout(showNext, 1000)
+		if not parent.querySelector(".tester:not(.show):not(.seen)")?
+			eventTarget.setAttribute("disabled", "disabled")
+			setTimeout(->
+				eventTarget.setAttribute("placeholder", "Robot is offline, continue to the next task.")
+			, 1000)
+		true
+	false
+
+elmIndex = (child) ->
+	i = 0
+	while( (child = child.previousSibling) != null )
+		i++;
+	i
 
 
 document.addEventListener("DOMContentLoaded", initFrontend, false)
