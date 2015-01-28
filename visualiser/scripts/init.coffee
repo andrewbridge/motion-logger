@@ -29,7 +29,7 @@ document.addEventListener "DOMContentLoaded", init, false
 quickPick = (stream) ->
     val = stream.pick(0)
     if val
-        while (val[0].data.event == "start" || val[0].data.event == "finish")
+        while (eventBlacklist.indexOf(val[0].data.event) > -1)
             val = stream.pick(0)
         {values: [val[0].data.datapoints.orientation.x, val[0].data.datapoints.orientation.y], time: val[0].time}
     else
@@ -41,7 +41,7 @@ getRange = (stream) ->
   i = 0
   val = stream.get(i)
   while(val)
-    if val.data.event isnt "start" and val.data.event isnt "finish"
+    if eventBlacklist.indexOf(val.data.event) is -1
       x = val.data.datapoints.orientation.x
       y = val.data.datapoints.orientation.y
       console.log x, y
@@ -52,3 +52,5 @@ getRange = (stream) ->
     i++
     val = stream.get(i)
   [{min: lowest.x, max: highest.x}, {min: lowest.y, max: highest.y}]
+
+  eventBlacklist = ["start", "finish", "formdata"]
