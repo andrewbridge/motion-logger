@@ -4,7 +4,7 @@
 if (typeof Promise == "undefined") {Promise = require("promise");}
 
 //Load in the API initialisers
-var endpoints = {collector: require('../collector-api/collector.js')} //The collector API calls
+var endpoints = {collector: require('../collector-api/collector.js'), visualiser: require('../visualiser-api/visualiser.js')} //The collector API calls
 //Visualiser API should go here too
 
 var scope = {restify: require('restify') //API server
