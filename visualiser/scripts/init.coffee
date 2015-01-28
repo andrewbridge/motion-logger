@@ -53,4 +53,4 @@ getRange = (stream) ->
     val = stream.get(i)
   [{min: lowest.x, max: highest.x}, {min: lowest.y, max: highest.y}]
 
-  eventBlacklist = ["start", "finish", "formdata"]
+eventBlacklist = ["start", "finish", "formdata"]
