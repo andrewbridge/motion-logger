@@ -7,11 +7,13 @@ init = ->
     # Get a reference to the canvas to work on.
     graph = {}
     window.graph = graph
+    graph.letterInfo = {}
 
     # Initialise the Stream
     # Dummy data is being used
     # graph.stream = new Sky([{data: {event: "start", startTime: 1417479021913}, time: 0}, {data: {event: "ping", datapoints: {x: 30, y: 30}}, time: 0}, {data: {event: "ping", datapoints: {x: 45, y: 45}}, time: 5000}, {data: {event: "ping", datapoints: {x: 67, y: 100}}, time: 10000}, {data: {event: "ping", datapoints: {x: 80, y: 4}}, time: 15000}])
-    graph.datapull = new DataPuller(window.location.protocol+'//'+window.location.hostname+':8080').then(
+    # graph.datapull = new DataPuller(window.location.protocol+'//'+window.location.hostname+':8080').then(
+    graph.datapull = new DataPuller('http://motionlogger.shrew.me:8080', graph).then(
         (data) ->
           graph.stream = data;
           # Initialise the plotter
@@ -26,12 +28,26 @@ init = ->
 
 document.addEventListener "DOMContentLoaded", init, false
 
+getMore = ->
+  graph = window.graph
+  graph.datapull = new DataPuller('http://motionlogger.shrew.me:8080', graph, graph.sessionUID).then(
+    (data) ->
+      graph.stream = data;
+      # Initialise the plotter
+      # Don't use that string selector in production!
+      graph.plotter = new Plotter "canvas", getRange(graph.stream)
+      # Initialise the animator
+      graph.animator = new Animator quickPick.bind(window, graph.stream), graph.plotter.plotPoint.bind(graph.plotter)
+  , alert.bind(window))
+
 quickPick = (stream) ->
     val = stream.pick(0)
     if val
-        while (eventBlacklist.indexOf(val[0].data.event) > -1)
+        console.log val
+        while (eventBlacklist.indexOf(val[0].data.event) > -1 || not val)
             val = stream.pick(0)
-        {values: [val[0].data.datapoints.orientation.x, val[0].data.datapoints.orientation.y], time: val[0].time}
+        console.log val
+        {values: [val[0].data.datapoints.orientation.x, val[0].data.datapoints.orientation.y], time: val[0].time, event: val[0].data.event, key: (val[0].data.keyInfo||{})}
     else
         false
 
@@ -53,4 +69,4 @@ getRange = (stream) ->
     val = stream.get(i)
   [{min: lowest.x, max: highest.x}, {min: lowest.y, max: highest.y}]
 
-eventBlacklist = ["start", "finish", "formdata"]
+eventBlacklist = ["start", "finish", "formdata", "ping"]

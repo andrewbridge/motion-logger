@@ -28,10 +28,10 @@ class Animator
       return false
     # Collect all the browser prefixed versions into one variable
     @raf = window.requestAnimationFrame.bind(window) || window.mozRequestAnimationFrame.bind(window) || window.webkitRequestAnimationFrame.bind(window) || window.msRequestAnimationFrame.bind(window)
-    @oldData = {values: [], time: -1}
+    @oldData = {values: [], time: -1, event: "none", key: {}}
     #@oldData = @datafeed()
-    @curData = {values: [], time: -1}
-    @newData = {values: [], time: -1}
+    @curData = {values: [], time: -1, event: "none", key: {}}
+    @newData = {values: [], time: -1, event: "none", key: {}}
     @realTime = new Date().getTime()
     @timeElapsed = 0;
     if @autostart

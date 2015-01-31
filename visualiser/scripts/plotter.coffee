@@ -28,6 +28,8 @@ class Plotter
       @height = @canvas.height
       @axis = 2
       @initStyles()
+      @createNotesArea()
+      @createTimerArea()
 
     @valRanges = @valRanges.splice(0, @axis)
 
@@ -76,11 +78,22 @@ class Plotter
     @context.lineTo(xPos, yPos)
     @context.closePath()
 
+  createNotesArea: ->
+    div = document.createElement "div"
+    @notes = @canvas.parentNode.insertBefore div, @canvas
+    true
+
+  createTimerArea: ->
+    div = document.createElement "div"
+    @timer = if (@notes?) then @notes.parentNode.insertBefore div, @notes else @canvas.parentNode.insertBefore div, @canvas
+    true
+
   plotPoint: (pointsObj, timeElapsed, isKeyFrame) ->
     # Redraw the required points
     if not @pathInProg
       @context.beginPath()
       @pathInProg = true
+      flag = true
       @context.moveTo(pointsObj.values[0]-@valRanges[0].min, pointsObj.values[1]-@valRanges[1].min)
     else
       @context.lineTo(pointsObj.values[0]-@valRanges[0].min, pointsObj.values[1]-@valRanges[1].min)
@@ -88,6 +101,17 @@ class Plotter
       @context.fillRect(pointsObj.values[0]-@valRanges[0].min-5, pointsObj.values[1]-@valRanges[1].min-5, 10, 10)
       @context.moveTo(pointsObj.values[0]-@valRanges[0].min, pointsObj.values[1]-@valRanges[1].min)
     @context.stroke()
+    if pointsObj.key.code?
+      if flag
+        @notes.innerHTML += "Running<br />"
+      if isKeyFrame
+        letter = String.fromCharCode(pointsObj.key.code)
+        @notes.innerHTML += letter
+        if (window.graph.letterInfo[letter]?)
+          window.graph.letterInfo[letter].push([pointsObj.values[0], pointsObj.values[1]])
+        else
+          window.graph.letterInfo[letter] = [[pointsObj.values[0], pointsObj.values[1]]]
+    @timer.innerHTML = timeElapsed + " " + Math.floor(timeElapsed/1000) + "s"
 
   findOrigin: (valRange) ->
     range = @findRange valRange

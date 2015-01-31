@@ -1,5 +1,5 @@
 class DataPuller
-  constructor: (@url, @autostart = true, @retryLimit = 7) ->
+  constructor: (@url, @globalScope, @sessionUID, @autostart = true, @retryLimit = 7) ->
     @pingRate = 5000
     if not @url?
       console.error "A URL endpoint must be provided in order to upload data."
@@ -15,7 +15,7 @@ class DataPuller
     @start = -> false
 
   start: ->
-    if not @sessionUID?
+    if not @sessionUID? or @sessionUID is `undefined`
       @getUID(@startCB.bind this)
     else
       @startCB()
@@ -53,6 +53,7 @@ class DataPuller
         try
           console.log "hat"
           that.sessionUID = JSON.parse(request.responseText).id
+          that.globalScope.sessionUID = that.sessionUID
           console.log "hot"
           cb()
           return true
