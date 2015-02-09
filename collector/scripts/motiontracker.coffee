@@ -10,11 +10,10 @@ class MotionTracker
 		else if window.OrientationEvent
     		# Listen for the MozOrientation event and handle OrientationData object by multiplying it by 90 (MozOrientation returns a value between -1 and 1).
             window.addEventListener 'MozOrientation', @foxListen, false
-        else
-        if window.DeviceMotionEvent
-        	# We can get infomation on acceleration and rotation rate if this exists
-        	window.addEventListener 'devicemotion', @accelListen, false
-        else
+
+		if window.DeviceMotionEvent
+			# We can get infomation on acceleration and rotation rate if this exists
+			window.addEventListener 'devicemotion', @accelListen, false
 
 	deconstructor: ->
 		window.removeEventListener 'deviceorientation', @tiltListen

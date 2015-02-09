@@ -1,0 +1,29 @@
+* {margin: 0; padding: 0;}
+
+body{
+  font-family: "Helvetica";
+  text-align: center;
+  background: #f4f4f7;
+  color: #444;
+}
+
+.results {
+  width: 100vw;
+  height: 60vh;
+  overflow: scroll;
+}
+
+.quads {
+  width: 100vw;
+  height: 40vh; //The height of the AOSP keyboard.
+  position: fixed;
+  bottom: 0;
+  background: url("AOSP-keys.gif") no-repeat;
+  background-size: 100% 100%;
+}
+
+.quad {
+  width: 50%;
+  height: 50%;
+  opacity: 0.5;
+}
