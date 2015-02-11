@@ -5,15 +5,18 @@ class MotionTracker
 		@foxListen = @foxTilt.bind(this)
 		@accelListen = @accel.bind(this)
 		if window.DeviceOrientationEvent
-    		# Listen for the deviceorientation event and handle DeviceOrientationEvent object, deviceorientation returns a value between -90 and 90.
-            window.addEventListener 'deviceorientation', @tiltListen, false
+			# Listen for the deviceorientation event and handle DeviceOrientationEvent object, deviceorientation returns a value between -90 and 90.
+			window.addEventListener 'deviceorientation', @tiltListen, false
 		else if window.OrientationEvent
-    		# Listen for the MozOrientation event and handle OrientationData object by multiplying it by 90 (MozOrientation returns a value between -1 and 1).
-            window.addEventListener 'MozOrientation', @foxListen, false
+			# Listen for the MozOrientation event and handle OrientationData object by multiplying it by 90 (MozOrientation returns a value between -1 and 1).
+			window.addEventListener 'MozOrientation', @foxListen, false
 
 		if window.DeviceMotionEvent
 			# We can get infomation on acceleration and rotation rate if this exists
 			window.addEventListener 'devicemotion', @accelListen, false
+
+		if not window.DeviceMotionEvent and not (window.DeviceOrientationEvent or window.OrientationEvent)
+			console.error "No motion tracking is possible."
 
 	deconstructor: ->
 		window.removeEventListener 'deviceorientation', @tiltListen
@@ -45,7 +48,7 @@ class MotionTracker
 		true
 
 	getSnapshot: ->
-		orientation: 
+		orientation:
 			x: @ox
 			y: @oy
 			z: @oz

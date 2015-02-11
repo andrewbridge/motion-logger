@@ -15,6 +15,9 @@ class MotionTracker
       # We can get infomation on acceleration and rotation rate if this exists
       window.addEventListener 'devicemotion', @accelListen, false
 
+    if not window.DeviceMotionEvent and not (window.DeviceOrientationEvent or window.OrientationEvent)
+      console.error "No motion tracking is possible."
+
   deconstructor: ->
     window.removeEventListener 'deviceorientation', @tiltListen
     window.removeEventListener 'MozOrientation', @foxListen
