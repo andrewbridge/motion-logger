@@ -11,9 +11,7 @@ class Sky
 		@startTime = @store[0].data.startTime
 
 	deconstructor: ->
-		@endTime = new Date().getTime()
-		@add({event: "finish", endTime: @endTime})
-		@add = -> false
+		true
 
 	get: (index) -> if index < @store.length then @store[index] else false
 
