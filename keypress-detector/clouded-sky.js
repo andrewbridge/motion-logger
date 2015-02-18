@@ -28,7 +28,7 @@ exports.init = function(streamArr) {
 
     CloudedSky.prototype.pick = function (index) {
         if (index >= this.store.length) {
-            return (this.pop() || false);
+            return (this.store.pop() || false);
         } else {
             return (this.store.splice(index, 1) || false);
         }
