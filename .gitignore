@@ -1,2 +1,4 @@
 #Block IntelliJ's project folder
 .idea
+#Ignore db-dump (probably shouldn't have that on GitHub)
+db-dump
