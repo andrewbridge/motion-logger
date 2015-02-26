@@ -1,18 +1,25 @@
 #!/usr/bin/env node
 
 /**
+ * The Keypress Learner takes data from the test data in the database, normalises it and trains multiple
+ * neural networks with the data.
+ *
+ * This should probably be reorganises into a transform stream for normalisation and a learner controller.
+ *
  * Created by Andrew Bridge on 16/02/2015.
  */
 
 //Shim for Promises
 if (typeof Promise == "undefined") {Promise = require("promise");}
 
+var lib = require('./common.js'); // Common functions
 var fs = require('fs'); // FileSystem
+var config = JSON.parse(fs.readFileSync("./config.json", "utf8")); // Load in config
 var save = require('save'); //Database interface
 var saveMongodb = require('save-mongodb');
 var Db = require('mongodb').Db; //MongoDB Database object
 var DbServer = require('mongodb').Server; //MongoDB Server object
-var brain = require('brain'); //Grab Neural Network
+var brain = require('brain'); //Neural Network
 var currentRecord = 0;
 var networks = {oBeta: {
     pre: new brain.NeuralNetwork(),
@@ -20,13 +27,11 @@ var networks = {oBeta: {
 }, oGamma: {
     pre: new brain.NeuralNetwork(),
     post: new brain.NeuralNetwork()
-}, aZ: {
+}, aZY: {
     pre: new brain.NeuralNetwork(),
     post: new brain.NeuralNetwork()
-}, aY: {
-    pre: new brain.NeuralNetwork(),
-    post: new brain.NeuralNetwork()
-}};
+}
+};
 var downUpDiff = []; // Min and Max difference between keydown and keyup events.
 var promExtractor = function(resolve, reject) {this.resolve = resolve; this.reject = reject;};
 
@@ -81,10 +86,8 @@ function finishSetup() {
                 oBetaPostPress: networks.oBeta.post.toJSON(),
                 oGammaPrePress: networks.oGamma.pre.toJSON(),
                 oGammaPostPress: networks.oGamma.post.toJSON(),
-                aZPrePress: networks.aZ.pre.toJSON(),
-                aZPostPress: networks.aZ.post.toJSON(),
-                aYPrePress: networks.aY.pre.toJSON(),
-                aYPostPress: networks.aY.post.toJSON()
+                aZYPrePress: networks.aZY.pre.toJSON(),
+                aZYPostPress: networks.aZY.post.toJSON()
             };
             fs.writeFile("./keypress_detection_data.json", JSON.stringify(dataObj), function(err) {
                 if (err) {
@@ -135,18 +138,17 @@ function learn(dataArr) {
     var datapoint;
     var exit = false;
     var hasPress = false;
-    var firstResponseThreshold = 1250; //Wait a second and a quarter before assuming a dud dataset.
-    var trailLen = 4;
+    var firstResponseThreshold = config.firstResponseThreshold; //Wait a second and a quarter before assuming a dud dataset.
+    var trailLen = config.trailLength;
     var trailCountDown;
-    var trailAcceptanceThreshold = 0.001; // The smallest range that should be exhibited in a trail for it to be included.
+    var trailAcceptanceThreshold = config.trailAcceptanceThreshold; // The smallest range that should be exhibited in a trail for it to be included.
     var postTrailArr;
     // The ranges that each value could exhibit.
     // aZ and aY are estimations based on testing and the fact that acceleration of gravity is 9.82m/s
-    var ranges = {oBeta: 360, oGamma: 180, aZ: 20, aY: 20};
+    var ranges = config.sensorRanges;
     var oBeta = {pings: [], prePress: [], postPress: []};
     var oGamma = {pings: [], prePress: [], postPress: []};
-    var aZ = {pings: [], prePress: [], postPress: []};
-    var aY = {pings: [], prePress: [], postPress: []};
+    var aZY = {pings: [], prePress: [], postPress: []};
     // pings - All the pings in the dataset
     // prePress - Contains arrays of [trailLen] pings before each keydown (keydown is included too, making [trailLen+1] values)
     // postPress - Contains arrays of [trailLen] pings after each keyup (keyup is included too, making [trailLen+1] values)
@@ -169,8 +171,7 @@ function learn(dataArr) {
                     && datapoint.data.datapoints.acceleration.z && datapoint.data.datapoints.acceleration.y)) {
                     oBeta.pings.push(datapoint.data.datapoints.orientation.x);
                     oGamma.pings.push(datapoint.data.datapoints.orientation.y);
-                    aZ.pings.push(datapoint.data.datapoints.acceleration.z);
-                    aY.pings.push(datapoint.data.datapoints.acceleration.y);
+                    aZY.pings.push(lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y));
                     if (!isNaN(trailCountDown) && typeof postTrailArr != "undefined") {
                         if (trailCountDown == 0) {
                             trailCountDown = NaN;
@@ -178,10 +179,8 @@ function learn(dataArr) {
                             if (findRange(oBetaTrail) != trailAcceptanceThreshold) {oBeta.postPress.push(oBetaTrail);}
                             var oGammaTrail = normaliseArrData([postTrailArr.oGamma].concat(oGamma.pings.slice(oGamma.pings.length-trailLen, oGamma.pings.length)), ranges.oGamma);
                             if (findRange(oGammaTrail) != trailAcceptanceThreshold) {oGamma.postPress.push(oGammaTrail);}
-                            var aZTrail = normaliseArrData([postTrailArr.aZ].concat(aZ.pings.slice(aZ.pings.length-trailLen, aZ.pings.length)), ranges.aZ);
-                            if (findRange(aZTrail) != trailAcceptanceThreshold) {aZ.postPress.push(aZTrail);}
-                            var aYTrail = normaliseArrData([postTrailArr.aY].concat(aY.pings.slice(aY.pings.length-trailLen, aY.pings.length)), ranges.aY);
-                            if (findRange(aYTrail) != trailAcceptanceThreshold) {aY.postPress.push(aYTrail);}
+                            var aZYTrail = normaliseArrData([postTrailArr.aZY].concat(aZY.pings.slice(aZY.pings.length-trailLen, aZY.pings.length)), ranges.aZY);
+                            if (findRange(aZYTrail) != trailAcceptanceThreshold) {aZY.postPress.push(aZYTrail);}
                             postTrailArr = undefined;
                         } else {
                             trailCountDown--;
@@ -190,17 +189,15 @@ function learn(dataArr) {
                 }
                 break;
             case "keydown":
-                if (oBeta.pings.length >= 6) {
+                if (oBeta.pings.length >= trailLen) {
                     hasPress = true;
                     //Only add data if it has a change above the trail acceptance threshold.
                     var oBetaTrail = normaliseArrData(oBeta.pings.slice(oBeta.pings.length-trailLen, oBeta.pings.length).concat(datapoint.data.datapoints.orientation.x), ranges.oBeta);
                     if (findRange(oBetaTrail) != trailAcceptanceThreshold) {oBeta.prePress.push(oBetaTrail);}
                     var oGammaTrail = normaliseArrData(oGamma.pings.slice(oGamma.pings.length-trailLen, oGamma.pings.length).concat(datapoint.data.datapoints.orientation.y), ranges.oGamma);
                     if (findRange(oGammaTrail) != trailAcceptanceThreshold) {oGamma.prePress.push(oGammaTrail);}
-                    var aZTrail = normaliseArrData(aZ.pings.slice(aZ.pings.length-trailLen, aZ.pings.length).concat(datapoint.data.datapoints.acceleration.z), ranges.aZ);
-                    if (findRange(aZTrail) != trailAcceptanceThreshold) {aZ.prePress.push(aZTrail);}
-                    var aYTrail = normaliseArrData(aY.pings.slice(aY.pings.length-trailLen, aY.pings.length).concat(datapoint.data.datapoints.acceleration.y), ranges.aY);
-                    if (findRange(aYTrail) != trailAcceptanceThreshold) {aY.prePress.push(aYTrail);}
+                    var aZYTrail = normaliseArrData(aZY.pings.slice(aZY.pings.length-trailLen, aZY.pings.length).concat(lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y)), ranges.aZY);
+                    if (findRange(aZYTrail) != trailAcceptanceThreshold) {aZY.prePress.push(aZYTrail);}
                     downTime = datapoint.time;
                 }
                 break;
@@ -212,7 +209,7 @@ function learn(dataArr) {
                     downUpDiff[0] = (timeDiff < downUpDiff[0] || typeof downUpDiff[0] == "undefined") ? timeDiff : downUpDiff[0];
                     downUpDiff[1] = (timeDiff < downUpDiff[1] || typeof downUpDiff[1] == "undefined") ? timeDiff : downUpDiff[1];
                     postTrailArr = {oBeta: datapoint.data.datapoints.orientation.x, oGamma: datapoint.data.datapoints.orientation.y,
-                                    aZ: datapoint.data.datapoints.acceleration.z, aY: datapoint.data.datapoints.acceleration.y};
+                                    aZY: lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y)};
                 }
                 break;
         }
@@ -225,16 +222,14 @@ function learn(dataArr) {
     }
     if (!exit && hasPress) {
         console.log("Prep complete!");
-        var data = {oBeta: {}, oGamma: {}, aZ: {}, aY: {}};
+        var data = {oBeta: {}, oGamma: {}, aZY: {}};
         console.log("Formatting");
         data.oBeta.prePress = oBeta.prePress.map(arrToBrainFormat.bind(this, {keypress: 1}));
         data.oBeta.postPress = oBeta.postPress.map(arrToBrainFormat.bind(this, {keypress: 1}));
         data.oGamma.prePress = oGamma.prePress.map(arrToBrainFormat.bind(this, {keypress: 1}));
         data.oGamma.postPress = oGamma.postPress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.aZ.prePress = aZ.prePress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.aZ.postPress = aZ.postPress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.aY.prePress = aY.prePress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.aY.postPress = aY.postPress.map(arrToBrainFormat.bind(this, {keypress: 1}));
+        data.aZY.prePress = aZY.prePress.map(arrToBrainFormat.bind(this, {keypress: 1}));
+        data.aZY.postPress = aZY.postPress.map(arrToBrainFormat.bind(this, {keypress: 1}));
 
         console.log("Now beginning to train networks.")
         for (var measure in networks) {
