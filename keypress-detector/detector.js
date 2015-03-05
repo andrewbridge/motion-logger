@@ -18,9 +18,7 @@ var teachings = JSON.parse(fs.readFileSync("./keypress_detection_data.json", "ut
 var stream = require('stream'); // Data stream
 var brain = require('brain'); // Neural Network
 var dataStream = new stream.Transform({objectMode: true});
-var cache = [], preCache = [];
-var possiblePre = false;
-var certainty = 0;
+var state = {cache: [], preCache: [], possiblePre: false, certainty: 0};
 // Set up networks with learned weights from test data
 var networks = {oBeta: {
     pre: new brain.NeuralNetwork().fromJSON(teachings.oBetaPrePress),
@@ -36,45 +34,49 @@ var networks = {oBeta: {
 // Transform expects each chunk to be a single datapoint
 dataStream._transform = function(chunk, encoding, done) {
     var zero = false; // Flag to reset cumulative variables.
-    cache.push(chunk);
-    if (cache.length > config.trailLength+1) {
-        cache.shift();
+    state.cache.push(chunk);
+    if (state.cache.length > config.trailLength+1) {
+        state.cache.shift();
     }
-    if (cache.length == config.trailLength+1) {
-        var keyPressPortion = (possiblePre) ? "post" : "pre";
+    if (state.cache.length == config.trailLength+1) {
+        var keyPressPortion = (state.possiblePre) ? "post" : "pre";
         for (var senType in networks) {
             if (networks.hasOwnProperty(senType)) {
-                var act = networks[senType][keyPressPortion].run(cache.map(lib.pickOutValues.bind(this, senType))) * config.sensorWeights[senType];
-                certainty += (possiblePre) ? act * 0.5 : act;
+                var act = networks[senType][keyPressPortion].run(state.cache.map(lib.pickOutValues.bind(this, senType))) * config.sensorWeights[senType];
+                state.certainty += (state.possiblePre) ? act * 0.5 : act;
             }
         }
 
-        if (certainty >= config.progressionThreshold) {
+        if (state.certainty >= config.progressionThreshold) {
             if (keyPressPortion == "pre") {
-                possiblePre = true;
-                preCache = cache;
-                cache = [preCache[preCache.length]]; // Data suggests there's only negligible gap between keydown and keyup, use end of pre trail for start of post trail
-                certainty *= 0.5;
+                state.possiblePre = true;
+                state.preCache = state.cache;
+                state.cache = [state.preCache[state.preCache.length]]; // Data suggests there's only negligible gap between keydown and keyup, use end of pre trail for start of post trail
+                state.certainty *= 0.5;
             } else {
-                preCache.pop();
-                var keypress = preCache.concat(cache);
+                state.preCache.pop();
+                var keypress = state.preCache.concat(state.cache);
                 this.push(keypress);
                 zero = true;
             }
         } else {zero = true;}
 
-        if (zero) {
-            possiblePre = false;
-            preCache = [];
-            cache = [];
-            certainty = 0;
-        }
+        zero&&zeroState();
     }
     done();
 };
 
-dataStream._flush = function(chunk, encoding, done) {
-    // TODO: Probably got some stuff in the cache even though there's no data left. what should happen? Anything?
+dataStream._flush = function(done) {
+    // Brain.js won't work with anything but the trained number of items, and even if the preCache set had a good certainty, half a key press is no use. Just zero state and move on.
+    zeroState();
+    done();
+}
+
+function zeroState() {
+    state.possiblePre = false;
+    state.preCache = [];
+    state.cache = [];
+    state.certainty = 0;
 }
 
 modules.exports = dataStream;
