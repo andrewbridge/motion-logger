@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * The Keypress Learner takes data from the test data in the database, normalises it and trains multiple
+ * The Area Learner takes data from the test data in the database, normalises it and trains multiple
  * neural networks with the data.
  *
  * This should probably be reorganises into a transform stream for normalisation and a learner controller.
@@ -81,10 +81,10 @@ function finishSetup() {
                 }
             });
         } else {
-            console.log("Beginning to train networks.");
+            console.log("Now beginning to train networks.");
             for (var measure in networks) {
                 if (networks.hasOwnProperty(measure)) {
-                    console.log("Training for "+measure, cache[measure].prePress[0]);
+                    console.log("Training for "+measure);
 
                     networks[measure].pre.train(cache[measure].prePress, {log: true});
                     networks[measure].post.train(cache[measure].postPress, {log: true});
@@ -120,7 +120,7 @@ function normaliseArrData(arr, maxRange) {
         var origin = arr[0];
         var len = arr.length;
         for (var i = 0; i < len; i++) {
-            arr[i] = ((arr[i]-origin)/maxRange);
+            arr[i] = ((arr[i]-origin)/maxRange)*100;
         }
     }
 
@@ -143,7 +143,7 @@ function arrToBrainFormat(outputVal, val) {
 }
 
 function learn(dataArr) {
-    console.log("Beginning prep...");
+    console.log("Beginning learning...");
     var stream = require("./clouded-sky.js").init(dataArr);
     var datapoint;
     var exit = false;
@@ -246,8 +246,8 @@ function learn(dataArr) {
             if (cache.hasOwnProperty(measure)) {
                 console.log("Adding to "+measure);
 
-                cache[measure].prePress = cache[measure].prePress.concat(data[measure].prePress);
-                cache[measure].postPress = cache[measure].postPress.concat(data[measure].postPress);
+                cache[measure].prePress.concat(data[measure].prePress);
+                cache[measure].postPress.concat(data[measure].postPress);
             }
         }
 

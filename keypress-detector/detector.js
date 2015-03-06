@@ -10,8 +10,9 @@
 //Shim for Promises
 if (typeof Promise == "undefined") {Promise = require("promise");}
 
-var lib = require('./common.js'); // Common functions
+var lib = require('./../common.js'); // Common functions
 var fs = require('fs'); // FileSystem
+var config = JSON.parse(fs.readFileSync("../detector-config.json", "utf8")); // Load in global config
 var config = JSON.parse(fs.readFileSync("./config.json", "utf8")); // Load in config
 config.sensorWeights = lib.normaliseWeights(config.sensorWeights); // Normalise weights.
 var teachings = JSON.parse(fs.readFileSync("./keypress_detection_data.json", "utf8")); // Load in JSON object

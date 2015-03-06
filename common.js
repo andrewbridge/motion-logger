@@ -6,6 +6,8 @@
  * Created by Andrew on 25/02/2015.
  */
 
+var fs = require('fs'); // FileSystem
+
 /**
  * getVectorMagnitude
  *
@@ -76,3 +78,18 @@ exports.pickOutValues = function(type, val, ind, arr) {
         return (typeof sensor != "undefined" && typeof plane != "undefined") ? (ret||val.data.datapoints[sensor][plane]) : NaN;
     }
 };
+
+//Loads multiple configuration files into one configuration object
+//Pass it as many paths to json files as required, any duplicates will be overwritten
+exports.loadConfigs = function() {
+    var config = {};
+    for (var i = 0; i<arguments.length; i++) {
+        var obj = JSON.parse(fs.readFileSync(arguments[i], "utf8")); // Load in file
+        for (var item in obj) {
+            if (obj.hasOwnProperty(item)) {
+                config[item] = obj[item];
+            }
+        }
+    }
+    return config;
+}
