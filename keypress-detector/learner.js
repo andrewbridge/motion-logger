@@ -19,18 +19,18 @@ var save = require('save'); //Database interface
 var saveMongodb = require('save-mongodb');
 var Db = require('mongodb').Db; //MongoDB Database object
 var DbServer = require('mongodb').Server; //MongoDB Server object
-var brain = require('brain'); //Neural Network
+var learner = require('../learners.js')('brain'); //Neural Network
 var currentRecord = 0;
 var cache = {oBeta: {prePress: [], postPress: []}, oGamma: {prePress: [], postPress: []}, aZY: {prePress: [], postPress: []}};
 var networks = {oBeta: {
-    pre: new brain.NeuralNetwork(),
-    post: new brain.NeuralNetwork()
+    pre: learner.newLearner(),
+    post: learner.newLearner()
 }, oGamma: {
-    pre: new brain.NeuralNetwork(),
-    post: new brain.NeuralNetwork()
+    pre: learner.newLearner(),
+    post: learner.newLearner()
 }, aZY: {
-    pre: new brain.NeuralNetwork(),
-    post: new brain.NeuralNetwork()
+    pre: learner.newLearner(),
+    post: learner.newLearner()
 }
 };
 var downUpDiff = []; // Min and Max difference between keydown and keyup events.

@@ -17,19 +17,19 @@ var config = JSON.parse(fs.readFileSync("./config.json", "utf8")); // Load in co
 config.sensorWeights = lib.normaliseWeights(config.sensorWeights); // Normalise weights.
 var teachings = JSON.parse(fs.readFileSync("./keypress_detection_data.json", "utf8")); // Load in JSON object
 var stream = require('stream'); // Data stream
-var brain = require('brain'); // Neural Network
+var learner = require('../learners.js')('brain'); // Neural Network
 var dataStream = new stream.Transform({objectMode: true});
 var state = {cache: [], preCache: [], possiblePre: false, certainty: 0};
 // Set up networks with learned weights from test data
 var networks = {oBeta: {
-    pre: new brain.NeuralNetwork().fromJSON(teachings.oBetaPrePress),
-    post: new brain.NeuralNetwork().fromJSON(teachings.oBetaPostPress)
+    pre: learner.newLearner().fromJSON(teachings.oBetaPrePress),
+    post: learner.newLearner().fromJSON(teachings.oBetaPostPress)
 }, oGamma: {
-    pre: new brain.NeuralNetwork().fromJSON(teachings.oGammaPrePress),
-    post: new brain.NeuralNetwork().fromJSON(teachings.oGammaPostPress)
+    pre: learner.newLearner().fromJSON(teachings.oGammaPrePress),
+    post: learner.newLearner().fromJSON(teachings.oGammaPostPress)
 }, aZY: {
-    pre: new brain.NeuralNetwork().fromJSON(teachings.aZYPrePress),
-    post: new brain.NeuralNetwork().fromJSON(teachings.aZYPostPress)
+    pre: learner.newLearner().fromJSON(teachings.aZYPrePress),
+    post: learner.newLearner().fromJSON(teachings.aZYPostPress)
 }};
 
 // Transform expects each chunk to be a single datapoint
