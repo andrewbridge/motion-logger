@@ -92,4 +92,4 @@ exports.loadConfigs = function() {
         }
     }
     return config;
-}
+};
