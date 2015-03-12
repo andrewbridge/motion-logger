@@ -89,10 +89,13 @@ exports = {
     },
     // Adapted from the Gaussian javascript library
     // Integrated probability density function
-    ipdf: function (x, sd, m, v, a, b, steps, methName) {
+    ipdf: function (x, sd, m, v, steps, methName) {
         var m = sd * Math.sqrt(2 * Math.PI);
+        //TODO: Test these lines
+        a = x - sd;
+        b = x + sd;
         //TODO: This line throws an error, as integrate expects the first parameter to be a function. Work out how to use x within the integration.
-        var e = this.integrate(Math.exp(-Math.pow(x - m, 2) / (2 * v)), a, b, steps, this.rules[methName]);
+        var e = this.integrate(function(e) {Math.exp(-Math.pow(x - m, 2) / (2 * v))}, a, b, steps, this.rules[methName]);
         return e / m;
     }
 };
