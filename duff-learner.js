@@ -28,10 +28,11 @@ DuffLearner.prototype.train = function(trainingSet, opts) {
 DuffLearner.prototype.run = function(testArr) {
     //Running
     var certainty = 0;
+    var zeros = 0;
     if (testArr.length == this.len) {
         for (var n = 0; n < this.len; n++) {
             var sd = this.result[n].standardDeviation, m = this.result[n].mean, v = this.result[n].variance;
-            certainty += this.maths.ipdf(testArr[n], sd, m, v, 0, 1, this.steps, "simpson") / this.len;
+            certainty += (sd == 0 || v == 0) ? 0.5 / this.len : this.maths.ipdf(testArr[n], sd, m, v, this.steps, "simpson") / this.len;
         }
         return certainty;
     } else {
@@ -46,9 +47,12 @@ DuffLearner.prototype.toJSON = function() {
 DuffLearner.prototype.fromJSON = function(json) {
     try {
         this.result = JSON.parse(json);
-        return true;
+        this.len = this.result.length;
+        return this;
     } catch (e) {
         console.error("There was an error parsing the JSON.");
-        return false;
+        return null;
     }
 };
+
+module.exports = DuffLearner;

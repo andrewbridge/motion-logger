@@ -1,12 +1,5 @@
-#!/usr/bin/env node
-
 /**
- * The Keypress Learner takes data from the test data in the database, normalises it and trains multiple
- * neural networks with the data.
- *
- * This should probably be reorganises into a transform stream for normalisation and a learner controller.
- *
- * Created by Andrew Bridge on 16/02/2015.
+ * Created by Andrew on 13/03/2015.
  */
 
 //Shim for Promises
@@ -20,17 +13,18 @@ var saveMongodb = require('save-mongodb');
 var Db = require('mongodb').Db; //MongoDB Database object
 var DbServer = require('mongodb').Server; //MongoDB Server object
 var learner = require('../learners.js')('duff'); //Neural Network;
-var currentRecord = 0;
+var currentRecord = 11; // Because I know this worked in the learning round
 var cache = {oBeta: {prePress: [], postPress: []}, oGamma: {prePress: [], postPress: []}, aZY: {prePress: [], postPress: []}};
+var netDat = JSON.parse(fs.readFileSync("./keypress_detection_data.json", "utf8"));
 var networks = {oBeta: {
-    pre: learner.newLearner(),
-    post: learner.newLearner()
+    pre: learner.newLearner().fromJSON(netDat.oBetaPrePress),
+    post: learner.newLearner().fromJSON(netDat.oBetaPostPress)
 }, oGamma: {
-    pre: learner.newLearner(),
-    post: learner.newLearner()
+    pre: learner.newLearner().fromJSON(netDat.oGammaPrePress),
+    post: learner.newLearner().fromJSON(netDat.oGammaPostPress)
 }, aZY: {
-    pre: learner.newLearner(),
-    post: learner.newLearner()
+    pre: learner.newLearner().fromJSON(netDat.aZYPrePress),
+    post: learner.newLearner().fromJSON(netDat.aZYPostPress)
 }
 };
 var downUpDiff = []; // Min and Max difference between keydown and keyup events.
@@ -75,38 +69,10 @@ function finishSetup() {
                     var finalData = data[currentRecord].data;
                     console.log("Selection and parsing successful. Sending for prep.");
                     currentRecord++;
-                    learn(finalData);
+                    test(finalData);
                 } catch (e) {
                     return new Error("There was an error parsing the test data.");
                 }
-            });
-        } else {
-            console.log("Beginning to train networks.");
-            for (var measure in networks) {
-                if (networks.hasOwnProperty(measure)) {
-                    console.log("Training for "+measure, cache[measure].prePress[0]);
-
-                    networks[measure].pre.train(cache[measure].prePress, {log: true});
-                    networks[measure].post.train(cache[measure].postPress, {log: true});
-                }
-            }
-            var dataObj = {
-                downUpRange: JSON.stringify(downUpDiff),
-                oBetaPrePress: networks.oBeta.pre.toJSON(),
-                oBetaPostPress: networks.oBeta.post.toJSON(),
-                oGammaPrePress: networks.oGamma.pre.toJSON(),
-                oGammaPostPress: networks.oGamma.post.toJSON(),
-                aZYPrePress: networks.aZY.pre.toJSON(),
-                aZYPostPress: networks.aZY.post.toJSON()
-            };
-            fs.writeFile("./keypress_detection_data.json", JSON.stringify(dataObj), function(err) {
-                if (err) {
-                    console.log("An issue occurred saving the detection data.");
-                } else {
-                    console.log("Detection data saved.");
-                }
-                console.log("Finished learning!");
-                process.exit(0);
             });
         }
     });
@@ -142,14 +108,14 @@ function arrToBrainFormat(outputVal, val) {
     return {input: val, output: outputVal};
 }
 
-function learn(dataArr) {
-    console.log("Beginning prep...");
+function test(dataArr) {
+    console.log("Beginning test...");
     var stream = require("./clouded-sky.js").init(dataArr);
     var datapoint;
     var exit = false;
     var hasPress = false;
     var firstResponseThreshold = config.firstResponseThreshold; //Wait a second and a quarter before assuming a dud dataset.
-    var trailLen = config.trailLength;
+    var trailLen = config.trailLength+1;
     var trailCountDown;
     var trailAcceptanceThreshold = config.trailAcceptanceThreshold; // The smallest range that should be exhibited in a trail for it to be included.
     var postTrailArr;
@@ -165,12 +131,17 @@ function learn(dataArr) {
     var downTime;
     var count = 0;
     var strmLen = stream.store.length;
+    var possible = false;
+    var probTime = NaN;
+    var predictions = [];
+    var actual = [];
+    var sampleProbs = [];
     while((datapoint = stream.pick(0)[0]) && !exit) {
         count++;
         if (Boolean(process.stdout.isTTY)) {
-            process.stdout.write("Prepping datapoint "+count+" of "+strmLen+": Type: "+datapoint.data.event);
+            process.stdout.write("Testing datapoint "+count+" of "+strmLen+": Type: "+datapoint.data.event);
         } else {
-            console.log("Prepping datapoint "+count+" of "+strmLen+": Type: "+datapoint.data.event);
+            console.log("Testing datapoint "+count+" of "+strmLen+": Type: "+datapoint.data.event);
         }
         switch(datapoint.data.event) {
             case "ping":
@@ -182,24 +153,25 @@ function learn(dataArr) {
                     oBeta.pings.push(datapoint.data.datapoints.orientation.x);
                     oGamma.pings.push(datapoint.data.datapoints.orientation.y);
                     aZY.pings.push(lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y));
-                    if (!isNaN(trailCountDown) && typeof postTrailArr != "undefined") {
-                        if (trailCountDown == 0) {
-                            trailCountDown = NaN;
-                            var oBetaTrail = normaliseArrData([postTrailArr.oBeta].concat(oBeta.pings.slice(oBeta.pings.length-trailLen, oBeta.pings.length)), ranges.oBeta);
-                            if (findRange(oBetaTrail) != trailAcceptanceThreshold) {oBeta.postPress.push(oBetaTrail);}
-                            var oGammaTrail = normaliseArrData([postTrailArr.oGamma].concat(oGamma.pings.slice(oGamma.pings.length-trailLen, oGamma.pings.length)), ranges.oGamma);
-                            if (findRange(oGammaTrail) != trailAcceptanceThreshold) {oGamma.postPress.push(oGammaTrail);}
-                            var aZYTrail = normaliseArrData([postTrailArr.aZY].concat(aZY.pings.slice(aZY.pings.length-trailLen, aZY.pings.length)), ranges.aZY);
-                            if (findRange(aZYTrail) != trailAcceptanceThreshold) {aZY.postPress.push(aZYTrail);}
-                            postTrailArr = undefined;
-                        } else {
-                            trailCountDown--;
+                    if (oBeta.pings.length >= trailLen) {
+                        var netChoice = (possible) ? "pre" : "post";
+                        var probB = networks.oBeta[netChoice].run(normaliseArrData(oBeta.pings.slice(oBeta.pings.length-trailLen, oBeta.pings.length),ranges.oBeta));
+                        var probG = networks.oGamma[netChoice].run(normaliseArrData(oGamma.pings.slice(oGamma.pings.length-trailLen, oGamma.pings.length),ranges.oGamma));
+                        var probA = networks.aZY[netChoice].run(normaliseArrData(aZY.pings.slice(aZY.pings.length-trailLen, aZY.pings.length),ranges.aZY));
+                        var prob = (probB + probG + probA) / 3;
+                        if (!possible && prob > 0.5) {
+                            probTime = datapoint.time;
+                            possible = true;
+                        } else if (possible && prob > 0.5) {
+                            possible = false; // Resetting value
+                            predictions.push(probTime);
+                            probTime = NaN; // Resetting value
                         }
                     }
                 }
                 break;
             case "keydown":
-                if (oBeta.pings.length >= trailLen) {
+                /*if (oBeta.pings.length >= trailLen) {
                     hasPress = true;
                     //Only add data if it has a change above the trail acceptance threshold.
                     var oBetaTrail = normaliseArrData(oBeta.pings.slice(oBeta.pings.length-trailLen, oBeta.pings.length).concat(datapoint.data.datapoints.orientation.x), ranges.oBeta);
@@ -209,18 +181,16 @@ function learn(dataArr) {
                     var aZYTrail = normaliseArrData(aZY.pings.slice(aZY.pings.length-trailLen, aZY.pings.length).concat(lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y)), ranges.aZY);
                     if (findRange(aZYTrail) != trailAcceptanceThreshold) {aZY.prePress.push(aZYTrail);}
                     downTime = datapoint.time;
-                }
+                }*/
                 break;
             case "keyup":
-                //downTime is only set if there are enough pings
-                if (typeof downTime == "number") {
-                    trailCountDown = trailLen-1;
-                    var timeDiff = datapoint.time - downTime;
-                    downUpDiff[0] = (timeDiff < downUpDiff[0] || typeof downUpDiff[0] == "undefined") ? timeDiff : downUpDiff[0];
-                    downUpDiff[1] = (timeDiff < downUpDiff[1] || typeof downUpDiff[1] == "undefined") ? timeDiff : downUpDiff[1];
-                    postTrailArr = {oBeta: datapoint.data.datapoints.orientation.x, oGamma: datapoint.data.datapoints.orientation.y,
-                                    aZY: lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y)};
-                }
+                actual.push(datapoint.time);
+                var netChoice = "pre";
+                var probB = networks.oBeta[netChoice].run(normaliseArrData(oBeta.pings.slice(oBeta.pings.length-trailLen, oBeta.pings.length),ranges.oBeta));
+                var probG = networks.oGamma[netChoice].run(normaliseArrData(oGamma.pings.slice(oGamma.pings.length-trailLen, oGamma.pings.length),ranges.oGamma));
+                var probA = networks.aZY[netChoice].run(normaliseArrData(aZY.pings.slice(aZY.pings.length-trailLen, aZY.pings.length),ranges.aZY));
+                var prob = (probB + probG + probA) / 3;
+                sampleProbs.push(prob);
                 break;
         }
         if (!stream.isEmpty()) {
@@ -230,30 +200,21 @@ function learn(dataArr) {
             process.stdout.write("\n");
         }
     }
-    if (!exit && hasPress) {
-        console.log("Prep complete!");
-        var data = {oBeta: {}, oGamma: {}, aZY: {}};
-        console.log("Formatting");
-        data.oBeta.prePress = oBeta.prePress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.oBeta.postPress = oBeta.postPress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.oGamma.prePress = oGamma.prePress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.oGamma.postPress = oGamma.postPress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.aZY.prePress = aZY.prePress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.aZY.postPress = aZY.postPress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-
-        console.log("Adding to data cache");
-        for (var measure in cache) {
-            if (cache.hasOwnProperty(measure)) {
-                console.log("Adding to "+measure);
-
-                cache[measure].prePress = cache[measure].prePress.concat(data[measure].prePress);
-                cache[measure].postPress = cache[measure].postPress.concat(data[measure].postPress);
+    if (!exit) {
+        msg = JSON.stringify(sampleProbs)+"\n\n"+JSON.stringify(predictions)+"\n\n"+JSON.stringify(actual);
+        fs.writeFile("./test_data.json", msg, function(err) {
+            if (err) {
+                console.log("An issue occurred saving the test data.");
+            } else {
+                console.log("Test data saved.");
             }
-        }
+            console.log("Finished testing!");
+            process.exit(0);
+        });
 
     } else {
-        console.log("This set of data exited early. Current record: "+currentRecord);
+        console.log("This set of data exited early. Current record: " + currentRecord);
+        process.exit(0);
     }
-    finishSetup();
     // TODO: Basically repeat but for quadrants (need to loop through data and split data into quadrants) (not here, separate)
 }

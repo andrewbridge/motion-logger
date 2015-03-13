@@ -45,7 +45,13 @@ var learners = {
             this.toJSON = this.network.toJSON.bind(this.network);
             this.fromJSON = this.network.fromJSON.bind(this.network);
         }
+    },
+    duff: {
+        newLearner: function() {
+            var duff = require("./duff-learner.js");
+            return new duff();
+        }
     }
 }
 
-exports = pickLearner;
+module.exports = pickLearner;
