@@ -46,6 +46,9 @@ module.exports = {
         var stdDev = Math.sqrt(this.getVariance(numArr, numOfDec));
         return this.getNumWithSetDec(stdDev, numOfDec);
     },
+    /* rules, sum and integrate are compiled version of the coffeescript implementation
+    of "Numerical Integration" on Rosetta Code: http://rosettacode.org/wiki/Numerical_integration#CoffeeScript
+     */
     rules: {
         left_rect: function (f, x, h) {
             return f(x);
@@ -97,5 +100,9 @@ module.exports = {
         //TODO: This line throws an error, as integrate expects the first parameter to be a function. Work out how to use x within the integration.
         var e = this.integrate(function(lX) {return Math.exp(-Math.pow(lX - m, 2) / (2 * v))}, a, b, steps, this.rules[methName]);
         return e / denom;
+    },
+    // Percentage difference
+    prctDiff: function(a,b) {
+        return (Math.abs(a - b) / ((a+b)/2)) * 100;
     }
 };
