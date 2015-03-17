@@ -2,6 +2,6 @@
     "trailLength": 4,
     "trailAcceptanceThreshold": 0.001,
     "firstResponseThreshold": 1250,
-    "sensorRanges": {"oBeta": 360, "oGamma": 180, "aZY": 20},
+    "sensorRanges": {"oBeta": 180, "oGamma": 90, "aZY": 20},
     "sensorWeights": {"oBeta": 0.33, "oGamma": 0.33, "aZY": 0.33}
 }

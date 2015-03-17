@@ -136,12 +136,16 @@ function test(dataArr) {
     var predictions = [];
     var actual = [];
     var sampleProbs = [];
+    var recordCollector = [];
     while((datapoint = stream.pick(0)[0]) && !exit) {
         count++;
         if (Boolean(process.stdout.isTTY)) {
             process.stdout.write("Testing datapoint "+count+" of "+strmLen+": Type: "+datapoint.data.event);
         } else {
             console.log("Testing datapoint "+count+" of "+strmLen+": Type: "+datapoint.data.event);
+        }
+        if (datapoint.data.event == "ping" || datapoint.data.event == "keydown" || datapoint.data.event == "keyup") {
+            recordCollector.push([datapoint.time, datapoint.data.datapoints.orientation.x]);
         }
         switch(datapoint.data.event) {
             case "ping":
@@ -201,7 +205,7 @@ function test(dataArr) {
         }
     }
     if (!exit) {
-        msg = JSON.stringify(sampleProbs)+"\n\n"+JSON.stringify(predictions)+"\n\n"+JSON.stringify(actual);
+        msg = JSON.stringify(sampleProbs)+"\n\n"+JSON.stringify(predictions)+"\n\n"+JSON.stringify(actual)+"\n\n"+JSON.stringify(recordCollector);
         fs.writeFile("./test_data.json", msg, function(err) {
             if (err) {
                 console.log("An issue occurred saving the test data.");

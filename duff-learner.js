@@ -7,15 +7,15 @@
  * certainty between 0-1 as to whether the input is similar to the learnt pattern.
  */
 
-function DuffLearner(steps) {
+function DuffLearner() {
     this.maths = require("./maths.js");
     this.result = [];
     this.resultAnalysis = {};
     this.len = 0;
-    this.steps = (typeof steps == "number") ? steps : 10000;
     this.bias = 0;
-    this.maxIterations = 20000;
-    this.errorThresh = 0.005;
+    this.initBias = 0.01;
+    this.maxIterations = 1000;
+    this.errorThresh = 0.35; // The error threshold is the number of values which can't be trained to the clamp
     this.realError = NaN;
     this.learningRate = 0.3;
     this.logRate = 10;
@@ -27,26 +27,27 @@ DuffLearner.prototype.train = function(trainingSet, opts) {
     //Training
     var res = false;
     this.log = opts.log;
-    var isArr = (trainingSet instanceof Array);
-    if (!isArr) {this.clamp = trainingSet[0].output[Object.keys(trainingSet[0].output)[0]]-1;}
+    var isArr = (trainingSet.length > 0 && trainingSet[0] instanceof Array);
+    if (!isArr) {this.clamp = trainingSet[0].output[Object.keys(trainingSet[0].output)[0]]-0.2;}
     trainingSet = (!isArr) ? trainingSet.map(function(v) {return v.input;}) : trainingSet;
-    this.len = trainingSet[0].length;
-    if (this.analyseData(trainingSet, log)) {
-        if (this.analyseResult(trainingSet, log)) {
+    this.len = (trainingSet.length > 0) ? trainingSet[0].length : 0;
+    if (this.analyseData(trainingSet)) {
+        if (this.analyseResult(trainingSet)) {
             var currentError = 1;
             var its = 0;
-            while (its > this.maxIterations || currentError <= this.errorThresh) {
+            while (its < this.maxIterations && currentError > this.errorThresh) {
                 var falseNegatives = 0;
                 for (var i = 0; i < trainingSet.length; i++) {
                     var result = this.run(trainingSet[i]);
-                    if (result > this.clamp+0.5) {
-                        this.bias *= 1-this.learningRate;
-                    } else if (result < this.clamp) {
-                        this.bias *= 1+this.learningRate;
+                    if (result > this.clamp+0.05) {
+                        this.bias += this.learningRate;
+                    } else if (result < this.clamp-0.05) {
+                        this.bias -= this.learningRate;
                         falseNegatives++;
                     }
+                    //console.log(result, this.bias, falseNegatives);
                 }
-                this.log && i % this.logRate == 0 && console.log("Learning iteration "+its+1);
+                this.log && i % this.logRate == 0 && console.log("Learning iteration "+(its+1));
                 currentError = falseNegatives/trainingSet.length;
                 its++;
             }
@@ -78,7 +79,7 @@ DuffLearner.prototype.analyseData = function(data) {
 
 DuffLearner.prototype.analyseResult = function(data) {
     var rawArr = data.map(this.iterMap.bind(this));
-    if (rawArr.indexOf(undefined) > -1) {
+    if (rawArr.indexOf(NaN) == -1) {
         this.resultAnalysis.mean = this.maths.getAverageFromNumArr(rawArr);
         this.resultAnalysis.stde = this.maths.getStandardDeviation(rawArr);
         this.log && console.log("Results analysed.");
@@ -92,7 +93,7 @@ DuffLearner.prototype.rawIter = function(testArr) {
     if (testArr.length == this.len) {
         for (var n = 0; n < this.len; n++) {
             var sd = this.result[n].standardDeviation, m = this.result[n].mean, v = this.result[n].variance;
-            certainty += (sd == 0 || v == 0) ? 0.5 / this.len : this.maths.ipdf(testArr[n], sd, m, v, this.steps, "simpson") / this.len;
+            certainty += (sd == 0 || v == 0) ? 0.5 / this.len : this.maths.pdf(testArr[n], sd, m, v) / this.len;
         }
         return certainty;
     } else {
@@ -122,7 +123,7 @@ DuffLearner.prototype.getNearestBoundary = function(val) {
 }
 
 DuffLearner.prototype.toJSON = function() {
-    var obj = {results: this.results, resultAnalysis: this.resultAnalysis, log: this.log, error: this.realError, clamp: this.clamp, steps: this.steps, bias: this.bias};
+    var obj = {result: this.result, resultAnalysis: this.resultAnalysis, log: this.log, error: this.realError, clamp: this.clamp, bias: parseFloat((this.bias).toFixed(20))};
     return JSON.stringify(obj);
 };
 
@@ -135,11 +136,10 @@ DuffLearner.prototype.fromJSON = function(json) {
         this.log = obj.log;
         this.realError = obj.error;
         this.clamp = obj.clamp;
-        this.steps = obj.steps;
         this.bias = obj.bias;
         return this;
     } catch (e) {
-        console.error("There was an error parsing the JSON.");
+        console.error("There was an error parsing the JSON.", e);
         return null;
     }
 };
