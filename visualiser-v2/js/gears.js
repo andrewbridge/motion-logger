@@ -17,7 +17,7 @@ function createGraphsFromInput() {
 }
 
 function createGraphFromInput() {
-    var data = [], tooltip = [];
+    var data = {}, tooltip = {};
     data["orientX"] = document.getElementById("jsonsrc-orientX").value;
     data["orientY"] = document.getElementById("jsonsrc-orientY").value;
     data["accelZY"] = document.getElementById("jsonsrc-accelZY").value;
@@ -38,8 +38,6 @@ function createGraphFromInput() {
 }
 
 function createGraph(elmSel, data, tooltip) {
-    tooltip[1] = tooltip[1].toString();
-    console.log(tooltip);
     var myChart = new JSChart(elmSel, 'line');
     myChart.setDataArray(data);
     myChart.setSize(document.body.getBoundingClientRect().width-40, 400);
@@ -53,7 +51,10 @@ function createGraph(elmSel, data, tooltip) {
     myChart.setAxisValuesColor('#333639');
     myChart.setAxisNameColor('#333639');
     myChart.setTextPaddingLeft(0);
-    myChart.setTooltip([tooltip[0]]);
+    tooltip = (tooltip[0] instanceof Array) ? tooltip : [tooltip];
+    for (var tip of tooltip) {
+        myChart.setTooltip(tip);
+    }
     myChart.draw();
 }
 

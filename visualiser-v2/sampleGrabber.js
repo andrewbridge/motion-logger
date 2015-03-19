@@ -127,12 +127,19 @@ function sample(dataArr) {
     var strmLen = stream.store.length;
     var sampleProbs = {oBeta: [], oGamma: [], aZY: []};
     var samplePresses = {oBeta: [], oGamma: [], aZY: []};
+    var allData = {oBeta: [], oGamma: [], aZY: []};
+    var allDataPresses = {oBeta: [], oGamma: [], aZY: []};
     while((datapoint = stream.pick(0)[0]) && !exit) {
         count++;
         if (Boolean(process.stdout.isTTY)) {
             process.stdout.write("Testing datapoint "+count+" of "+strmLen+": Type: "+datapoint.data.event);
         } else {
             console.log("Testing datapoint "+count+" of "+strmLen+": Type: "+datapoint.data.event);
+        }
+        if (datapoint.data.event == "ping" || datapoint.data.event == "keydown" || datapoint.data.event == "keyup") {
+            allData.oBeta.push([datapoint.time, datapoint.data.datapoints.orientation.x]);
+            allData.oGamma.push([datapoint.time, datapoint.data.datapoints.orientation.y]);
+            allData.aZY.push([datapoint.time, lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y)]);
         }
         switch(datapoint.data.event) {
             case "ping":
@@ -193,11 +200,14 @@ function sample(dataArr) {
         sampleProbs.oBeta = sampleProbs.oBeta.filter(function(v, i, a) {return (i % split == 0) ? v : false;});
         sampleProbs.oGamma = sampleProbs.oGamma.filter(function(v, i, a) {return (i % split == 0) ? v : false;});
         sampleProbs.aZY = sampleProbs.aZY.filter(function(v, i, a) {return (i % split == 0) ? v : false;});
+        allDataPresses.oBeta = samplePresses.oBeta;
+        allDataPresses.oGamma = samplePresses.oGamma;
+        allDataPresses.aZY = samplePresses.aZY;
         samplePresses.oBeta = samplePresses.oBeta.filter(function(v, i, a) {return (i % split == 0) ? v : false;});
         samplePresses.oGamma = samplePresses.oGamma.filter(function(v, i, a) {return (i % split == 0) ? v : false;});
         samplePresses.aZY = samplePresses.aZY.filter(function(v, i, a) {return (i % split == 0) ? v : false;});
         //msg = oB.reduce(function(p, v) {return p+JSON.stringify(v)+"\n"}, "")+"\n\n"+oG.reduce(function(p, v) {return p+JSON.stringify(v)+"\n"}, "")+"\n\n"+aZ.reduce(function(p, v) {return p+JSON.stringify(v)+"\n"}, "");
-        msg = JSON.stringify(sampleProbs)+"\n\n"+JSON.stringify(samplePresses);
+        msg = JSON.stringify(sampleProbs)+"\n\n"+JSON.stringify(samplePresses)+"\n\n"+JSON.stringify(allData)+"\n\n"+JSON.stringify(allDataPresses);
         fs.writeFile("./sample_data.json", msg, function(err) {
             if (err) {
                 console.log("An issue occurred saving the sample data.");

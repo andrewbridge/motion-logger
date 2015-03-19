@@ -19,7 +19,7 @@ var save = require('save'); //Database interface
 var saveMongodb = require('save-mongodb');
 var Db = require('mongodb').Db; //MongoDB Database object
 var DbServer = require('mongodb').Server; //MongoDB Server object
-var learner = require('../learners.js')('duff'); //Neural Network;
+var learner = require('../learners.js')('brain'); //Neural Network;
 var currentRecord = 0;
 var cache = {oBeta: {prePress: [], postPress: []}, oGamma: {prePress: [], postPress: []}, aZY: {prePress: [], postPress: []}};
 var networks = {oBeta: {
@@ -84,10 +84,10 @@ function finishSetup() {
             console.log("Beginning to train networks.");
             for (var measure in networks) {
                 if (networks.hasOwnProperty(measure)) {
-                    console.log("Training for "+measure, cache[measure].prePress[0]);
+                    console.log("Training for "+measure);
 
-                    networks[measure].pre.train(cache[measure].prePress, {log: true});
-                    networks[measure].post.train(cache[measure].postPress, {log: true});
+                    console.log(networks[measure].pre.train(cache[measure].prePress, {log: true}));
+                    console.log(networks[measure].post.train(cache[measure].postPress, {log: true}));
                 }
             }
             var dataObj = {
@@ -142,6 +142,23 @@ function arrToBrainFormat(outputVal, val) {
     return {input: val, output: outputVal};
 }
 
+function splitArr(arr, splitStart, splitEnd) {
+    var front = arr.slice(0,splitStart);
+    var back = arr.slice(splitEnd+1);
+    return [front, back];
+}
+
+function pruneArr(arr, limit) {
+    var ret = [];
+    for (var i = 0; i < arr.length; i++) {
+        var ar = arr[i].slice(0); //Take a copy
+        while (ar.length >= limit) {
+            ret.push(ar.splice(0,limit));
+        }
+    }
+    return ret;
+}
+
 function learn(dataArr) {
     console.log("Beginning prep...");
     var stream = require("./clouded-sky.js").init(dataArr);
@@ -150,15 +167,15 @@ function learn(dataArr) {
     var hasPress = false;
     var firstResponseThreshold = config.firstResponseThreshold; //Wait a second and a quarter before assuming a dud dataset.
     var trailLen = config.trailLength;
-    var trailCountDown;
+    var trailCountDown = NaN, touchFlag = NaN;
     var trailAcceptanceThreshold = config.trailAcceptanceThreshold; // The smallest range that should be exhibited in a trail for it to be included.
     var postTrailArr;
     // The ranges that each value could exhibit.
     // aZ and aY are estimations based on testing and the fact that acceleration of gravity is 9.82m/s
     var ranges = config.sensorRanges;
-    var oBeta = {pings: [], prePress: [], postPress: []};
-    var oGamma = {pings: [], prePress: [], postPress: []};
-    var aZY = {pings: [], prePress: [], postPress: []};
+    var oBeta = {pings: [], prePress: [], postPress: [], noise: [[]]};
+    var oGamma = {pings: [], prePress: [], postPress: [], noise: [[]]};
+    var aZY = {pings: [], prePress: [], postPress: [], noise: [[]]};
     // pings - All the pings in the dataset
     // prePress - Contains arrays of [trailLen] pings before each keydown (keydown is included too, making [trailLen+1] values)
     // postPress - Contains arrays of [trailLen] pings after each keyup (keyup is included too, making [trailLen+1] values)
@@ -182,6 +199,9 @@ function learn(dataArr) {
                     oBeta.pings.push(datapoint.data.datapoints.orientation.x);
                     oGamma.pings.push(datapoint.data.datapoints.orientation.y);
                     aZY.pings.push(lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y));
+                    oBeta.noise[oBeta.noise.length-1].push(datapoint.data.datapoints.orientation.x);
+                    oGamma.noise[oGamma.noise.length-1].push(datapoint.data.datapoints.orientation.y);
+                    aZY.noise[aZY.noise.length-1].push(lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y));
                     if (!isNaN(trailCountDown) && typeof postTrailArr != "undefined") {
                         if (trailCountDown == 0) {
                             trailCountDown = NaN;
@@ -194,6 +214,15 @@ function learn(dataArr) {
                             postTrailArr = undefined;
                         } else {
                             trailCountDown--;
+                        }
+                    }
+                    if (!isNaN(touchFlag)) {
+                        if (touchFlag == 0) {
+                            oBeta.noise.splice.apply(oBeta.noise, [oBeta.noise.length-1, 1].concat(splitArr(oBeta.noise[oBeta.noise.length-1], oBeta.noise[oBeta.noise.length-1].length-8, oBeta.noise[oBeta.noise.length-1].length)));
+                            oGamma.noise.splice.apply(oGamma.noise, [oGamma.noise.length-1, 1].concat(splitArr(oGamma.noise[oGamma.noise.length-1], oGamma.noise[oGamma.noise.length-1].length-8, oGamma.noise[oGamma.noise.length-1].length)));
+                            aZY.noise.splice.apply(aZY.noise, [aZY.noise.length-1, 1].concat(splitArr(aZY.noise[aZY.noise.length-1], aZY.noise[aZY.noise.length-1].length-8, aZY.noise[aZY.noise.length-1].length)));
+                        } else {
+                            touchFlag--;
                         }
                     }
                 }
@@ -222,6 +251,10 @@ function learn(dataArr) {
                                     aZY: lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y)};
                 }
                 break;
+            case "touchend":
+                //Flag a touch event so it can be removed from the noise data
+                touchFlag = 4;
+                break;
         }
         if (!stream.isEmpty()) {
             process.stdout.clearLine();  // clear current text
@@ -234,12 +267,12 @@ function learn(dataArr) {
         console.log("Prep complete!");
         var data = {oBeta: {}, oGamma: {}, aZY: {}};
         console.log("Formatting");
-        data.oBeta.prePress = oBeta.prePress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.oBeta.postPress = oBeta.postPress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.oGamma.prePress = oGamma.prePress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.oGamma.postPress = oGamma.postPress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.aZY.prePress = aZY.prePress.map(arrToBrainFormat.bind(this, {keypress: 1}));
-        data.aZY.postPress = aZY.postPress.map(arrToBrainFormat.bind(this, {keypress: 1}));
+        data.oBeta.prePress = oBeta.prePress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(oBeta, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
+        data.oBeta.postPress = oBeta.postPress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(oBeta, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
+        data.oGamma.prePress = oGamma.prePress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(oGamma, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
+        data.oGamma.postPress = oGamma.postPress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(oGamma, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
+        data.aZY.prePress = aZY.prePress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(aZY, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
+        data.aZY.postPress = aZY.postPress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(aZY, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
 
         console.log("Adding to data cache");
         for (var measure in cache) {
