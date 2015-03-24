@@ -21,18 +21,8 @@ var Db = require('mongodb').Db; //MongoDB Database object
 var DbServer = require('mongodb').Server; //MongoDB Server object
 var learner = require('../learners.js')('brain'); //Neural Network;
 var currentRecord = 0;
-var cache = {oBeta: {prePress: [], postPress: []}, oGamma: {prePress: [], postPress: []}, aZY: {prePress: [], postPress: []}};
-var networks = {oBeta: {
-    pre: learner.newLearner(),
-    post: learner.newLearner()
-}, oGamma: {
-    pre: learner.newLearner(),
-    post: learner.newLearner()
-}, aZY: {
-    pre: learner.newLearner(),
-    post: learner.newLearner()
-}
-};
+var cache = {oBeta: [], oGamma: [], aZY: []};
+var networks = {oBeta: learner.newLearner(), oGamma: learner.newLearner(), aZY: learner.newLearner()};
 var downUpDiff = []; // Min and Max difference between keydown and keyup events.
 var promExtractor = function(resolve, reject) {this.resolve = resolve; this.reject = reject;};
 
@@ -86,20 +76,16 @@ function finishSetup() {
                 if (networks.hasOwnProperty(measure)) {
                     console.log("Training for "+measure);
 
-                    console.log(networks[measure].pre.train(cache[measure].prePress, {log: true}));
-                    console.log(networks[measure].post.train(cache[measure].postPress, {log: true}));
+                    console.log(networks[measure].train(cache[measure], {log: true}));
                 }
             }
             var dataObj = {
                 downUpRange: JSON.stringify(downUpDiff),
-                oBetaPrePress: networks.oBeta.pre.toJSON(),
-                oBetaPostPress: networks.oBeta.post.toJSON(),
-                oGammaPrePress: networks.oGamma.pre.toJSON(),
-                oGammaPostPress: networks.oGamma.post.toJSON(),
-                aZYPrePress: networks.aZY.pre.toJSON(),
-                aZYPostPress: networks.aZY.post.toJSON()
+                oBetaPress: networks.oBeta.toJSON(),
+                oGammaPress: networks.oGamma.toJSON(),
+                aZYPress: networks.aZY.toJSON()
             };
-            fs.writeFile("./keypress_detection_data.json", JSON.stringify(dataObj), function(err) {
+            fs.writeFile("./area_detection_data.json", JSON.stringify(dataObj), function(err) {
                 if (err) {
                     console.log("An issue occurred saving the detection data.");
                 } else {
@@ -159,6 +145,23 @@ function pruneArr(arr, limit) {
     return ret;
 }
 
+function findCharArea(arr, char) {
+    var ret = {};
+    for (var i = 0; i < arr.length; i++) {
+        var areaDef = arr[i];
+        if (areaDef.chars.indexOf(char) > -1) {
+            ret[areaDef.name] = 1;
+        } else {
+            ret[areaDef.name] = 0;
+        }
+    }
+    return ret;
+}
+
+function insertToArea(areaArr, areaStrObj, data) {
+    areaArr.push(arrToBrainFormat(areaStrObj, data));
+}
+
 function learn(dataArr) {
     console.log("Beginning prep...");
     var stream = require("./clouded-sky.js").init(dataArr);
@@ -167,15 +170,16 @@ function learn(dataArr) {
     var hasPress = false;
     var firstResponseThreshold = config.firstResponseThreshold; //Wait a second and a quarter before assuming a dud dataset.
     var trailLen = config.trailLength;
-    var trailCountDown = NaN, touchFlag = NaN;
+    var trailCountDown = NaN, quadHits, postTrailArr;
     var trailAcceptanceThreshold = config.trailAcceptanceThreshold; // The smallest range that should be exhibited in a trail for it to be included.
-    var postTrailArr;
     // The ranges that each value could exhibit.
     // aZ and aY are estimations based on testing and the fact that acceleration of gravity is 9.82m/s
     var ranges = config.sensorRanges;
-    var oBeta = {pings: [], prePress: [], postPress: [], noise: [[]]};
-    var oGamma = {pings: [], prePress: [], postPress: [], noise: [[]]};
-    var aZY = {pings: [], prePress: [], postPress: [], noise: [[]]};
+    var areas = (config.areas > 0 && config.areaDefinitions instanceof Array && config.areaDefinitions.length == config.areas) ? config.areaDefinitions : process.exit(1);
+    var keyset = config.keySet;
+    var oBeta = {pings: [], presses: []};
+    var oGamma = {pings: [], presses: []};
+    var aZY = {pings: [], presses: []};
     // pings - All the pings in the dataset
     // prePress - Contains arrays of [trailLen] pings before each keydown (keydown is included too, making [trailLen+1] values)
     // postPress - Contains arrays of [trailLen] pings after each keyup (keyup is included too, making [trailLen+1] values)
@@ -196,64 +200,37 @@ function learn(dataArr) {
                     exit = true;
                 } else if ((datapoint.data.datapoints.orientation.x && datapoint.data.datapoints.orientation.y
                     && datapoint.data.datapoints.acceleration.z && datapoint.data.datapoints.acceleration.y)) {
-                    oBeta.pings.push(datapoint.data.datapoints.orientation.x);
-                    oGamma.pings.push(datapoint.data.datapoints.orientation.y);
-                    aZY.pings.push(lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y));
-                    oBeta.noise[oBeta.noise.length-1].push(datapoint.data.datapoints.orientation.x);
-                    oGamma.noise[oGamma.noise.length-1].push(datapoint.data.datapoints.orientation.y);
-                    aZY.noise[aZY.noise.length-1].push(lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y));
-                    if (!isNaN(trailCountDown) && typeof postTrailArr != "undefined") {
+                    oBeta.pings.push([datapoint.time, datapoint.data.datapoints.orientation.x]);
+                    oGamma.pings.push([datapoint.time, datapoint.data.datapoints.orientation.y]);
+                    aZY.pings.push([datapoint.time, lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y)]);
+                    if (!isNaN(trailCountDown) && quadHits instanceof Array) {
                         if (trailCountDown == 0) {
                             trailCountDown = NaN;
-                            var oBetaTrail = normaliseArrData([postTrailArr.oBeta].concat(oBeta.pings.slice(oBeta.pings.length-trailLen, oBeta.pings.length)), ranges.oBeta);
-                            if (findRange(oBetaTrail) != trailAcceptanceThreshold) {oBeta.postPress.push(oBetaTrail);}
-                            var oGammaTrail = normaliseArrData([postTrailArr.oGamma].concat(oGamma.pings.slice(oGamma.pings.length-trailLen, oGamma.pings.length)), ranges.oGamma);
-                            if (findRange(oGammaTrail) != trailAcceptanceThreshold) {oGamma.postPress.push(oGammaTrail);}
-                            var aZYTrail = normaliseArrData([postTrailArr.aZY].concat(aZY.pings.slice(aZY.pings.length-trailLen, aZY.pings.length)), ranges.aZY);
-                            if (findRange(aZYTrail) != trailAcceptanceThreshold) {aZY.postPress.push(aZYTrail);}
+                            var oBetaTrail = normaliseArrData(lib.fitIn(oBeta.pings.slice(oBeta.pings.length-trailLen, oBeta.pings.length), [postTrailArr.time, postTrailArr.oBeta]), ranges.oBeta);
+                            if (findRange(oBetaTrail) != trailAcceptanceThreshold) {insertToArea(oBeta.presses, quadHits, oBetaTrail);}
+                            var oGammaTrail = normaliseArrData(lib.fitIn(oGamma.pings.slice(oGamma.pings.length-trailLen, oGamma.pings.length), [postTrailArr.time, postTrailArr.oGamma]), ranges.oGamma);
+                            if (findRange(oGammaTrail) != trailAcceptanceThreshold) {insertToArea(oGamma.presses, quadHits, oGammaTrail);}
+                            var aZYTrail = normaliseArrData(lib.fitIn(aZY.pings.slice(aZY.pings.length-trailLen, aZY.pings.length), [postTrailArr.aZY.time, postTrailArr.aZY]), ranges.aZY);
+                            if (findRange(aZYTrail) != trailAcceptanceThreshold) {insertToArea(aZY.presses, quadHits, aZYTrail);}
                             postTrailArr = undefined;
                         } else {
                             trailCountDown--;
                         }
                     }
-                    if (!isNaN(touchFlag)) {
-                        if (touchFlag == 0) {
-                            oBeta.noise.splice.apply(oBeta.noise, [oBeta.noise.length-1, 1].concat(splitArr(oBeta.noise[oBeta.noise.length-1], oBeta.noise[oBeta.noise.length-1].length-8, oBeta.noise[oBeta.noise.length-1].length)));
-                            oGamma.noise.splice.apply(oGamma.noise, [oGamma.noise.length-1, 1].concat(splitArr(oGamma.noise[oGamma.noise.length-1], oGamma.noise[oGamma.noise.length-1].length-8, oGamma.noise[oGamma.noise.length-1].length)));
-                            aZY.noise.splice.apply(aZY.noise, [aZY.noise.length-1, 1].concat(splitArr(aZY.noise[aZY.noise.length-1], aZY.noise[aZY.noise.length-1].length-8, aZY.noise[aZY.noise.length-1].length)));
-                        } else {
-                            touchFlag--;
-                        }
-                    }
-                }
-                break;
-            case "keydown":
-                if (oBeta.pings.length >= trailLen) {
-                    hasPress = true;
-                    //Only add data if it has a change above the trail acceptance threshold.
-                    var oBetaTrail = normaliseArrData(oBeta.pings.slice(oBeta.pings.length-trailLen, oBeta.pings.length).concat(datapoint.data.datapoints.orientation.x), ranges.oBeta);
-                    if (findRange(oBetaTrail) != trailAcceptanceThreshold) {oBeta.prePress.push(oBetaTrail);}
-                    var oGammaTrail = normaliseArrData(oGamma.pings.slice(oGamma.pings.length-trailLen, oGamma.pings.length).concat(datapoint.data.datapoints.orientation.y), ranges.oGamma);
-                    if (findRange(oGammaTrail) != trailAcceptanceThreshold) {oGamma.prePress.push(oGammaTrail);}
-                    var aZYTrail = normaliseArrData(aZY.pings.slice(aZY.pings.length-trailLen, aZY.pings.length).concat(lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y)), ranges.aZY);
-                    if (findRange(aZYTrail) != trailAcceptanceThreshold) {aZY.prePress.push(aZYTrail);}
-                    downTime = datapoint.time;
                 }
                 break;
             case "keyup":
-                //downTime is only set if there are enough pings
-                if (typeof downTime == "number") {
-                    trailCountDown = trailLen-1;
-                    var timeDiff = datapoint.time - downTime;
-                    downUpDiff[0] = (timeDiff < downUpDiff[0] || typeof downUpDiff[0] == "undefined") ? timeDiff : downUpDiff[0];
-                    downUpDiff[1] = (timeDiff < downUpDiff[1] || typeof downUpDiff[1] == "undefined") ? timeDiff : downUpDiff[1];
+                //Note that we can get away with using fromCharCode here, because we're only looking for the English alphabet and space
+                var char = String.fromCharCode(datapoint.data.keyInfo.code).toLowerCase();
+                console.log(char);
+                if (keyset.indexOf(char) > -1) {
+                    trailCountDown = trailLen - 1;
+                    quadHits = findCharArea(areas, char);
                     postTrailArr = {oBeta: datapoint.data.datapoints.orientation.x, oGamma: datapoint.data.datapoints.orientation.y,
-                        aZY: lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y)};
+                        aZY: lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y), time: datapoint.time};
+                    hasPress = true;
                 }
-                break;
-            case "touchend":
-                //Flag a touch event so it can be removed from the noise data
-                touchFlag = 4;
+
                 break;
         }
         if (!stream.isEmpty()) {
@@ -265,22 +242,14 @@ function learn(dataArr) {
     }
     if (!exit && hasPress) {
         console.log("Prep complete!");
-        var data = {oBeta: {}, oGamma: {}, aZY: {}};
-        console.log("Formatting");
-        data.oBeta.prePress = oBeta.prePress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(oBeta, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
-        data.oBeta.postPress = oBeta.postPress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(oBeta, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
-        data.oGamma.prePress = oGamma.prePress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(oGamma, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
-        data.oGamma.postPress = oGamma.postPress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(oGamma, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
-        data.aZY.prePress = aZY.prePress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(aZY, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
-        data.aZY.postPress = aZY.postPress.map(arrToBrainFormat.bind(this, {keypress: 1})).concat(pruneArr(aZY, trailLen+1).map(arrToBrainFormat.bind(this, {keypress: 0})));
+        var data = {oBeta: oBeta, oGamma: oGamma, aZY: aZY};
 
         console.log("Adding to data cache");
         for (var measure in cache) {
             if (cache.hasOwnProperty(measure)) {
                 console.log("Adding to "+measure);
 
-                cache[measure].prePress = cache[measure].prePress.concat(data[measure].prePress);
-                cache[measure].postPress = cache[measure].postPress.concat(data[measure].postPress);
+                cache[measure] = cache[measure].concat(data[measure]);
             }
         }
 

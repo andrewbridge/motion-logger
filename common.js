@@ -93,3 +93,22 @@ exports.loadConfigs = function() {
     }
     return config;
 };
+
+//Fit an event into an array of events by the time they ocurred.
+exports.fitIn = function fitIn(arr, sampleArr) {
+    if (sampleArr[0] <= arr[0][0]) {
+        return sampleArr.concat(arr);
+    }
+    if (sampleArr[0] >= arr[arr.length - 1][0]) {
+        return arr.concat(sampleArr);
+    }
+    for (var i = 0; i < arr.length - 1; i++) {
+        var time = arr[i][0];
+        var nextTime = arr[i + 1][0];
+        if (sampleArr[0] >= time && sampleArr[0] <= nextTime) {
+            arr.splice(i + 1, 0, sampleArr);
+            return arr;
+        }
+    }
+    return null;
+};

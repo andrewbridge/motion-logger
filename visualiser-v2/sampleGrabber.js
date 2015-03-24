@@ -89,24 +89,6 @@ function findRange(arr, retArr) {
     return (retArr) ? maxMin : Math.abs(maxMin[1]-maxMin[0]);
 }
 
-function fitIn(arr, sampleArr) {
-    if (sampleArr[0] <= arr[0][0]) {
-        return sampleArr.concat(arr);
-    }
-    if (sampleArr[0] >= arr[arr.length - 1][0]) {
-        return arr.concat(sampleArr);
-    }
-    for (var i = 0; i < arr.length - 1; i++) {
-        var time = arr[i][0];
-        var nextTime = arr[i + 1][0];
-        if (sampleArr[0] >= time && sampleArr[0] <= nextTime) {
-            arr.splice(i + 1, 0, sampleArr);
-            return arr;
-        }
-    }
-    return null;
-}
-
 function arrToBrainFormat(outputVal, val) {
     return {input: val, output: outputVal};
 }
@@ -153,9 +135,9 @@ function sample(dataArr) {
                     aZY.pings.push([datapoint.time, lib.getVectorMagnitude(datapoint.data.datapoints.acceleration.z, datapoint.data.datapoints.acceleration.y)]);
                     if (oBeta.pings.length >= trailLen) {
                         if (press == 0) {
-                            sampleProbs.oBeta.push(normaliseArrData(fitIn(oBeta.pings.slice(oBeta.pings.length - trailLen, oBeta.pings.length), pressData.oBeta), ranges.oBeta));
-                            sampleProbs.oGamma.push(normaliseArrData(fitIn(oGamma.pings.slice(oGamma.pings.length - trailLen, oGamma.pings.length), pressData.oGamma), ranges.oGamma));
-                            sampleProbs.aZY.push(normaliseArrData(fitIn(aZY.pings.slice(aZY.pings.length - trailLen, aZY.pings.length), pressData.aZY), ranges.aZY));
+                            sampleProbs.oBeta.push(normaliseArrData(lib.fitIn(oBeta.pings.slice(oBeta.pings.length - trailLen, oBeta.pings.length), pressData.oBeta), ranges.oBeta));
+                            sampleProbs.oGamma.push(normaliseArrData(lib.fitIn(oGamma.pings.slice(oGamma.pings.length - trailLen, oGamma.pings.length), pressData.oGamma), ranges.oGamma));
+                            sampleProbs.aZY.push(normaliseArrData(lib.fitIn(aZY.pings.slice(aZY.pings.length - trailLen, aZY.pings.length), pressData.aZY), ranges.aZY));
                             samplePresses.oBeta.push(pressData.oBeta);
                             samplePresses.oGamma.push(pressData.oGamma);
                             samplePresses.aZY.push(pressData.aZY);
