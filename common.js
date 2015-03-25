@@ -97,7 +97,7 @@ exports.loadConfigs = function() {
 //Fit an event into an array of events by the time they ocurred.
 exports.fitIn = function fitIn(arr, sampleArr) {
     if (sampleArr[0] <= arr[0][0]) {
-        return sampleArr.concat(arr);
+        return [sampleArr].concat(arr);
     }
     if (sampleArr[0] >= arr[arr.length - 1][0]) {
         return arr.concat(sampleArr);

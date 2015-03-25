@@ -1,12 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * The Keypress Learner takes data from the test data in the database, normalises it and trains multiple
- * neural networks with the data.
+ * Tests the detector
  *
- * This should probably be reorganises into a transform stream for normalisation and a learner controller.
- *
- * Created by Andrew Bridge on 16/02/2015.
+ * Created by Andrew Bridge on 24/02/2015.
  */
 
 //Shim for Promises
@@ -21,8 +18,9 @@ var Db = require('mongodb').Db; //MongoDB Database object
 var DbServer = require('mongodb').Server; //MongoDB Server object
 var learner = require('../learners.js')('brain'); //Neural Network;
 var currentRecord = 0;
-var cache = {oBeta: [], oGamma: [], aZY: []};
-var networks = {oBeta: learner.newLearner(), oGamma: learner.newLearner(), aZY: learner.newLearner()};
+var cache = [];//{oBeta: [], oGamma: [], aZY: []};
+var netDat = JSON.parse(fs.readFileSync("./area_detection_data.json", "utf8"));
+var networks = {oBeta: learner.newLearner().fromJSON(netDat.oBetaPress), oGamma: learner.newLearner().fromJSON(netDat.oGammaPress), aZY: learner.newLearner().fromJSON(netDat.aZYPress)};
 var downUpDiff = []; // Min and Max difference between keydown and keyup events.
 var promExtractor = function(resolve, reject) {this.resolve = resolve; this.reject = reject;};
 
@@ -71,31 +69,61 @@ function finishSetup() {
                 }
             });
         } else {
-            console.log("Beginning to train networks.");
-            for (var measure in networks) {
-                if (networks.hasOwnProperty(measure)) {
-                    console.log("Training for "+measure);
-
-                    console.log(networks[measure].train(cache[measure], {log: true, iterations: 1000000, logPeriod: 25000}));
+            console.log("Beginning to test networks.");
+            var hits = {overall: 0, oBeta: 0, oGamma: 0, aZY: 0};
+            console.log(cache.length);
+            for (var i = 0; i < cache.length; i++) {
+                console.log("Testing record "+(i+1)+" of "+cache.length);
+                var certainty = 0;
+                var areas = [];
+                for (var area in cache[i].oBeta.output) {
+                    if (cache[i].oBeta.output[area] == 1) {
+                        areas.push(area);
+                    }
                 }
+                for (var measure in networks) {
+                    if (networks.hasOwnProperty(measure) && (measure == "oGamma" || measure == "aZY" )) {
+                        var press = cache[i][measure];
+                        var output = networks[measure].run(press.input);
+                        var pick = findHighestAct(output);
+                        if (pick && pick[0] == findHighestAct(press.output)[0] && pick[1] > 0.45) {
+                            certainty += pick[1]/2;
+                            hits[measure]++;
+                        } else {
+                            console.log(measure, pick[0], pick[1], findHighestAct(press.output)[0], output[findHighestAct(press.output)[0]], press.output);
+                        }
+                    }
+                }
+                hits.overall += (certainty > 0.45) ? 1 : 0;
             }
-            var dataObj = {
+            hits.prctScs = (hits.overall/cache.length)*100;
+            /*var dataObj = {
                 downUpRange: JSON.stringify(downUpDiff),
                 oBetaPress: networks.oBeta.toJSON(),
                 oGammaPress: networks.oGamma.toJSON(),
                 aZYPress: networks.aZY.toJSON()
-            };
-            fs.writeFile("./area_detection_data.json", JSON.stringify(dataObj), function(err) {
+            };*/
+            fs.appendFile("./results.txt", JSON.stringify(hits)+" //0.45 Net Certainty, 0.45 Overall certainty, Real answer check off, All networks\n", function(err) {
                 if (err) {
-                    console.log("An issue occurred saving the detection data.");
+                    console.log("An issue occurred saving the result data.");
                 } else {
-                    console.log("Detection data saved.");
+                    console.log("Test result data saved.");
                 }
-                console.log("Finished learning!");
+                console.log("Finished testing!"+JSON.stringify(hits));
                 process.exit(0);
             });
         }
     });
+}
+
+function findHighestAct(outObj) {
+    var highest = ["", 0];
+    for (var item in outObj){
+        if (outObj.hasOwnProperty(item)) {
+            highest = (highest[1] < outObj[item]) ? [item, outObj[item]] : highest;
+        }
+    }
+    return (highest[0] != "") ? highest : null;
 }
 
 //This function takes the first index of an array as an origin and finds the differences for each index afterwards.
@@ -242,15 +270,16 @@ function learn(dataArr) {
     }
     if (!exit && hasPress) {
         console.log("Prep complete!");
-        var data = {oBeta: oBeta, oGamma: oGamma, aZY: aZY};
+        var data = [];
+        for (var i = 0; i < oBeta.presses.length; i++) {
+            data.push({oBeta: oBeta.presses[i], oGamma: oGamma.presses[i], aZY: aZY.presses[i]});
+        }
 
         console.log("Adding to data cache");
-        for (var measure in cache) {
-            if (cache.hasOwnProperty(measure)) {
-                console.log("Adding to "+measure);
-
-                cache[measure] = cache[measure].concat(data[measure].presses);
-            }
+        try {
+            cache = cache.concat(data);
+        } catch (e) {
+            console.log(e);
         }
 
     } else {
