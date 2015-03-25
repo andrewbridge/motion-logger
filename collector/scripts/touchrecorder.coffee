@@ -1,5 +1,5 @@
 class TouchRecorder
-	constructor: (@pingRate = 500, @stream = new Stream(), @mtntrckr = new MotionTracker(), start = true, @events = "keydown keyup") ->
+	constructor: (@pingRate = 500, @stream = new Stream(), @mtntrckr = new MotionTracker(), start = true, @events = "keydown keyup touchstart touchend") ->
 		@initialiseEvents()
 		@running = start
 		if start
