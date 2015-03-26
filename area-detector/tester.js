@@ -17,14 +17,14 @@ var saveMongodb = require('save-mongodb');
 var Db = require('mongodb').Db; //MongoDB Database object
 var DbServer = require('mongodb').Server; //MongoDB Server object
 var learner = require('../learners.js')('brain'); //Neural Network;
-var currentRecord = 0;
+var currentRecord = 14;
 var cache = [];//{oBeta: [], oGamma: [], aZY: []};
 var netDat = JSON.parse(fs.readFileSync("./area_detection_data.json", "utf8"));
 var networks = {oBeta: learner.newLearner().fromJSON(netDat.oBetaPress), oGamma: learner.newLearner().fromJSON(netDat.oGammaPress), aZY: learner.newLearner().fromJSON(netDat.aZYPress)};
 var downUpDiff = []; // Min and Max difference between keydown and keyup events.
 var promExtractor = function(resolve, reject) {this.resolve = resolve; this.reject = reject;};
 
-var subjSaveDb = new Db('TestSubjects', new DbServer('localhost', 27017, {})) //Initialisation of the TestSubjects database
+var subjSaveDb = new Db('NewTestSubjects', new DbServer('localhost', 27017, {})) //Initialisation of the TestSubjects database
     , subjCol; //Initialising db interface object
 
 var testProm = {};
@@ -86,7 +86,7 @@ function finishSetup() {
                         var press = cache[i][measure];
                         var output = networks[measure].run(press.input);
                         var pick = findHighestAct(output);
-                        if (pick && pick[0] == findHighestAct(press.output)[0] && pick[1] > 0.45) {
+                        if (pick && /*pick[0] == findHighestAct(press.output)[0] &&*/ pick[1] > 0.45) {
                             certainty += pick[1]/2;
                             hits[measure]++;
                         } else {

@@ -19,5 +19,8 @@ This is bad, as 11% of predictions were incorrect predictions.
 {"overall":26,"oBeta":0,"oGamma":53,"aZY":66,"prctScs":17.56756756756757} //0.5 Net Certainty, 0.5 Overall certainty, Real answer check off, oGamma and aZY networks
 {"overall":74,"oBeta":0,"oGamma":65,"aZY":131,"prctScs":50} //0.45 Net Certainty, 0.45 Overall certainty, Real answer check off, oGamma and aZY networks *
 {"overall":72,"oBeta":118,"oGamma":65,"aZY":131,"prctScs":48.64864864864865} //0.45 Net Certainty, 0.45 Overall certainty, Real answer check off, All networks
-{"overall":59,"oBeta":0,"oGamma":47,"aZY":82,"prctScs":39.86486486486486} //0.45 Net Certainty, 0.45 Overall certainty, Real answer check off, oGamma and aZY networks *
+{"overall":59,"oBeta":0,"oGamma":47,"aZY":82,"prctScs":39.86486486486486} //0.45 Net Certainty, 0.45 Overall certainty, oGamma and aZY networks *
 //All above results are using the training data the networks were training with
+//All below results are using testing data, the networks have not seen before
+{"overall":38,"oBeta":0,"oGamma":31,"aZY":38,"prctScs":28.57142857142857} //0.45 Net Certainty, 0.45 Overall certainty, oGamma and aZY networks
+{"overall":119,"oBeta":0,"oGamma":110,"aZY":142,"prctScs":70.41420118343196} //0.45 Net Certainty, 0.45 Overall certainty, Real answer check off, oGamma and aZY networks
