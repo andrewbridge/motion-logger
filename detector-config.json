@@ -3,5 +3,9 @@
     "trailAcceptanceThreshold": 0.001,
     "firstResponseThreshold": 1250,
     "sensorRanges": {"oBeta": 180, "oGamma": 90, "aZY": 20},
-    "sensorWeights": {"oBeta": 0.33, "oGamma": 0.33, "aZY": 0.33}
+    "sensorWeights": {"oBeta": 0.33, "oGamma": 0.33, "aZY": 0.33},
+    "areas": 5,
+    "areaDefinitions": [{"name":"topleft", "chars":["q","w","e","r","t","a","s","d","f","g"]},{"name":"topright", "chars":["y","u","i","o","p","g","h","j","k","l"]},
+      {"name":"botleft", "chars":["z","x","c","v"]}, {"name":"botright", "chars":["v","b","n","m"]}, {"name": "space", "chars": [" "]}],
+    "keySet": ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"," "]
 }
