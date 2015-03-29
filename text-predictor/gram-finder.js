@@ -12,60 +12,20 @@ if (typeof Promise == "undefined") {Promise = require("promise");}
 var lib = require('../common.js'); // Common functions
 var fs = require('fs'); // FileSystem
 var config = lib.loadConfigs("../detector-config.json", "./config.json"); //Load in global and local config
-var sampleText = loadSamples("./sampletexts/prideandprejudice.txt", "./sampletexts/pioneersofscience.txt", "./sampletexts/artificiallight.txt", stripBoilerPlate);
+var regCharSet = config.regCharSet;
 var charSet = config.keySet;
+var sampleText = lib.loadSamples("./sampletexts/prideandprejudice.txt", "./sampletexts/pioneersofscience.txt", "./sampletexts/artificiallight.txt",
+                             "./sampletexts/theadventuresofsherlockholmes.txt", "./sampletexts/historyofunitedstates.txt", "./sampletexts/manualofsurgery.txt",
+                             "./sampletexts/ofwarandpeace.txt", "./sampletexts/words.txt", lib.stripBoilerPlate);
+var charArr = sampleText.split("");
+var wordArr = sampleText.split(" ");
+var dict = lib.loadDict("./dict.txt", wordArr, regCharSet);
 var areas = config.areaDefinitions;
 var logPeriod = config.logPeriod;
-
-function loadSamples() {
-    var samplePrep = (typeof arguments[arguments.length-1] == "function") ? arguments[arguments.length-1] : false;
-    var ret = "";
-    for (var i = 0; i < arguments.length && typeof arguments[i] == "string"; i++) {
-        var sample = fs.readFileSync(arguments[i], "utf8").toString();
-        ret += (samplePrep) ? samplePrep(sample) : sample;
-    }
-    return ret;
-}
-
-function stripBoilerPlate(text) {
-    var start = text.indexOf("*** START OF THIS PROJECT GUTENBERG EBOOK");
-    var end = text.indexOf("*** END OF THIS PROJECT GUTENBERG EBOOK");
-    return text.substring(start, end).replace(/^.+?(\n|\r)/, "").replace(/\n|\r/g, " ").replace(/  /g, " ");
-}
-
-function sortAndPrettyPrint(obj, columnHeight) {
-    var sortable = [];
-    for (var itm in obj) {
-        sortable.push([itm, obj[itm]])
-    }
-    sortable.sort(function(a, b) {return b[1] - a[1]});
-    var ret = "";
-    columnHeight = (columnHeight||sortable.length);
-    var columnNum = Math.ceil(sortable.length/columnHeight);
-    var largestNum = String(sortable[0][1]).trim().length;
-    for (var x = 0, spaceOffset = ""; x < largestNum; x++) {spaceOffset += " ";}
-    for (var i = 0; i < columnHeight; i++) {
-        var valsLeft = false;
-        for (var n = 0; n < columnNum; n++) {
-            var keyVal = sortable[i+(columnHeight*n)];
-            ret += (keyVal) ? keyVal[0] + ": " + keyVal[1] + spaceOffset.substr(0, spaceOffset.length-String(keyVal[1]).length) + "\t" : "";
-            valsLeft = (keyVal) ? true : valsLeft;
-        }
-        if (!valsLeft) {
-            i = columnHeight;
-        } else {
-            ret += "\n";
-        }
-    }
-    return ret;
-}
 
 var i,n,x,y,char = "";
 var results = {chars: {}, bigrams: {}, trigrams: {}, quadrigrams: {}};
 var overallCharSetChars = 0;
-
-var charArr = sampleText.split("");
-var wordArr = sampleText.split(" ");
 
 console.log("Character analysis");
 for (i = 0; i < charArr.length; i++) {
@@ -89,7 +49,7 @@ for (x = 0; x < grams.length; x++) {
     for (i = 0; i < wordArr.length; i++) {
         //Get rid of words with accented characters, they're not English, so would skew results
         if (!wordArr[i].match(/[\u00C0-\u017F]/g)) {
-            var wordChars = wordArr[i].replace(/[^a-z ]+?/g, "").split("");
+            var wordChars = wordArr[i].toLowerCase().replace(/[^a-z ]+?/g, "").split("");
             if (i % logPeriod == 0) {
                 console.log("Word " + (i + 1) + " of " + wordArr.length);
             }
@@ -99,7 +59,6 @@ for (x = 0; x < grams.length; x++) {
                     for (y = n; y < gramLen + n; y++) {
                         gramInst += wordChars[y];
                     }
-                    if (gramInst == "gvit") {console.log(wordArr[i], wordChars);}
                     if (gramInst in results[gram]) {
                         results[gram][gramInst]++;
                     } else {
@@ -145,10 +104,10 @@ for (i = 0; i < resultCats.length; i++) { //Loop through each set of results
 }
 
 var columnHeight = 50;
-var finalReturn = "Chars:\n\n"+sortAndPrettyPrint(results.chars, columnHeight)+"\n\nBigrams:\n\n"+sortAndPrettyPrint(results.bigrams, columnHeight)+"\n\nTrigrams:\n\n"+sortAndPrettyPrint(results.trigrams, columnHeight)+"\n\nQuadrigrams:\n\n"+sortAndPrettyPrint(results.quadrigrams, columnHeight)+"\n\nUnique Sequences:\n\n";
+var finalReturn = "Chars:\n\n"+lib.sortAndPrettyPrint(results.chars, columnHeight)+"\n\nBigrams:\n\n"+lib.sortAndPrettyPrint(results.bigrams, columnHeight)+"\n\nTrigrams:\n\n"+lib.sortAndPrettyPrint(results.trigrams, columnHeight)+"\n\nQuadrigrams:\n\n"+lib.sortAndPrettyPrint(results.quadrigrams, columnHeight)+"\n\nUnique Sequences:\n\n";
 for (uniSeq in seqs) {
     if (seqs.hasOwnProperty(uniSeq)) {
-        finalReturn += uniSeq+": {"+sortAndPrettyPrint(seqs[uniSeq], 1).replace(/\n/g,"")+"}\n";
+        finalReturn += uniSeq+": {"+lib.sortAndPrettyPrint(seqs[uniSeq], 1).replace(/\n/g,"")+"}\n";
     }
 }
 

@@ -1,3 +1,6 @@
 {
-  "logPeriod": 100000
+  "logPeriod": 100000,
+  "areaDefinitionsNoDupe": [{"name":"topleft", "chars":["q","w","e","r","t","a","s","d","f","g"]},{"name":"topright", "chars":["y","u","i","o","p","h","j","k","l"]},
+    {"name":"botleft", "chars":["z","x","c","v"]}, {"name":"botright", "chars":["b","n","m"]}, {"name": "space", "chars": [" "]}],
+  "regCharSet": "a-z "
 }
