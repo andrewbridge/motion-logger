@@ -10,7 +10,8 @@
 if (typeof Promise == "undefined") {Promise = require("promise");}
 
 var lib = require('../common.js'); // Common functions
-var chance = require('chance'); // Random data generator
+var Chance = require('chance'); // Random data generator
+var chance = new Chance();
 var config = lib.loadConfigs("../detector-config.json", "./config.json"); //Load in global and local config
 var testText = lib.loadSamples("./testtexts/aliceinwonderland.txt", lib.stripBoilerPlate);
 var regCharSet = config.regCharSet;
@@ -18,7 +19,7 @@ var charSet = config.keySet;
 var areas = config.areaDefinitionsNoDupe;
 var dict = lib.loadDict("./dict.txt");
 
-var wordArr = sampleText.replace(/\s\s|\s/g, " ").split(" ");
+var wordArr = testText.replace(/\s\s|\s/g, " ").split(" ");
 
 function getWordSequence(length) {
     if (length < wordArr.length) {
@@ -39,8 +40,16 @@ function getWordSequence(length) {
     }
 }
 
-function provideEncodedSequence(length) {
-    var words = getWordSequence(length);
+function provideEncodedSequence() {
+    var words;
+    switch (typeof arguments[0]) {
+        case "string":
+            words = arguments[0];
+            break;
+        default:
+            words = getWordSequence(arguments[0]||20);
+            break;
+    }
     var safetyCnt = 1000;
     while(words.match(new RegExp("[^"+regCharSet+"'-]", "g")) && safetyCnt > 0) {
         words = getWordSequence(length);

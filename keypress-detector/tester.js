@@ -220,5 +220,4 @@ function test(dataArr) {
         console.log("This set of data exited early. Current record: " + currentRecord);
         process.exit(0);
     }
-    // TODO: Basically repeat but for quadrants (need to loop through data and split data into quadrants) (not here, separate)
 }

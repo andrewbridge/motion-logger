@@ -7,6 +7,7 @@
  */
 
 var fs = require('fs'); // FileSystem
+var Dict = require("./dict.js"); //Dictionary module
 
 /**
  * getVectorMagnitude
@@ -124,38 +125,6 @@ function charSetTrim(str, charSet, escapeSpecials) {
     return str.replace(new RegExp("^[^"+charSet+"]+|[^"+charSet+"]+$", "g"), "");
 };
 
-exports.createDict = createDict;
-function createDict(regCharSet, dict, curVal, ind, arr) {
-    if (Boolean(process.stdout.isTTY)) {
-        if (ind != 0 && ind % 499 == 0) {
-            process.stdout.clearLine();  // clear current text
-            process.stdout.cursorTo(0);  // return cursor
-            process.stdout.write("Word " + ind + " of " + arr.length + " ("+Math.round((ind/arr.length)*100)+"%)");
-        } else if (ind == 0) {
-            console.log("Creating dictionary from sample text...");
-        } else if (ind == arr.length-1) {
-            process.stdout.write("\n");
-        }
-    } else {
-        console.log("Word "+ind+" of "+arr.length);
-    }
-    if (charSetTrim(curVal, "a-z").length != 0) {
-        curVal = charSetTrim(curVal.toLowerCase(), regCharSet);
-        var vArr = (curVal.indexOf("-") > -1) ? curVal.split("-") : [curVal];
-        for (var i = 0; i < vArr.length; i++) {
-            var vIt = vArr[i].replace(/'/g, ""); //Apostrophes are the last exception of punctuation in a word I can think of
-            //Get rid of words with accented characters, they're not English, so would skew results
-            //if (!vIt.match(/[\u00C0-\u017F]/g)) {
-            if (vIt.match(new RegExp("^[" + regCharSet + "]+$", "g"))) {
-                if (dict.indexOf(vIt) == -1 && (vIt.length > 1 || (vIt == "a" || vIt == "i"))) { // Note this exception, if you want characters to be words, remove it!
-                    dict.push(vIt);
-                }
-            }
-        }
-    }
-    return dict;
-}
-
 exports.loadSamples = loadSamples;
 function loadSamples() {
     var samplePrep = (typeof arguments[arguments.length-1] == "function") ? arguments[arguments.length-1] : false;
@@ -207,6 +176,7 @@ function columnizeStr(str, params) {
     return ret;
 }
 
+//Credit to: http://stackoverflow.com/questions/1069666/sorting-javascript-object-by-property-value
 exports.sortObj = sortObj;
 function sortObj(obj, descending) {
     descending = (descending) ? descending : true;
@@ -216,6 +186,21 @@ function sortObj(obj, descending) {
     }
     sortable.sort(function(a, b) {return (descending) ? b[1] - a[1] : b[1] - a[1];});
     return sortable;
+}
+
+// Credit to: http://stackoverflow.com/questions/2454295/javascript-concatenate-properties-from-multiple-objects-associative-array
+exports.concatObj = concatObj;
+function concatObj() {
+    var ret = {};
+    var len = arguments.length;
+    for (var i=0; i<len; i++) {
+        for (p in arguments[i]) {
+            if (arguments[i].hasOwnProperty(p)) {
+                ret[p] = arguments[i][p];
+            }
+        }
+    }
+    return ret;
 }
 
 exports.sortAndPrettyPrint = sortAndPrettyPrint;
@@ -233,20 +218,7 @@ function sortAndPrettyPrint(obj, columnParams) {
 
 exports.loadDict = loadDict;
 function loadDict(fileName, wordArr, regCharSet) {
-    try {
-        var dict = JSON.parse(fs.readFileSync(fileName, "utf8"));
-    } catch (e) {
-        // If the file doesn't exist. Generate it and create it.
-        if (e.code == "ENOENT" && wordArr && regCharSet) {
-            dict = wordArr.reduce(createDict.bind(this, regCharSet), []);
-            fs.writeFileSync("./dict.txt", JSON.stringify(dict));
-            console.log("New dictionary produced and saved.\n"+dict.length+" words.");
-        } else {
-            console.error("An error occurred loading the dictionary.", e);
-            process.exit(1);
-        }
-    }
-    return dict;
+    return new Dict(fileName, wordArr, regCharSet);
 }
 
 exports.getArea = getArea;
