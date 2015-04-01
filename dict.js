@@ -6,6 +6,7 @@
  * Created by Andrew Bridge 29/03/2015
  */
 
+var lib = require('./common.js'); // Common functions
 var progressUpdateRate = 499;
 var ProgressBar = require('progress'); // Feedback helper module
 var fs = require('fs'); // FileSystem
@@ -18,11 +19,11 @@ function Dict(fileName, wordArr, regCharSet) {
         // If the file doesn't exist. Generate it and create it.
         if (e.code == "ENOENT" && wordArr && regCharSet) {
             console.log("Creating dictionary from sample text...");
-            var prog = new ProgressBar("Word :current of :total :bar :percent :eta", {total: Math.ceil(wordArr.length/progressUpdateRate), width: 10});
+            var prog = new ProgressBar("Word :current of :total :bar :percent :eta", {total: wordArr.length, width: 10});
             this.dict = wordArr.reduce(this.createDict.bind(this, regCharSet, prog), []);
-            this.dictText = JSON.stringify(dict);
-            fs.writeFileSync(fileName, JSON.stringify(dict));
-            console.log("New dictionary produced and saved.\n"+dict.length+" words.");
+            this.dictText = JSON.stringify(this.dict);
+            fs.writeFileSync(filName, JSON.stringify(this.dict));
+            console.log("New dictionary produced and saved.\n"+this.dict.length+" words.");
         } else {
             throw new Error("An error occurred loading the dictionary: "+ e.message, e.fileName, e.lineNumber);
         }
@@ -31,10 +32,10 @@ function Dict(fileName, wordArr, regCharSet) {
 
 Dict.prototype.createDict = function(regCharSet, prog, dict, curVal, ind, arr) {
     if (ind % progressUpdateRate == 0 || ind == arr.length-1) {
-        prog.tick();
+        prog.tick(progressUpdateRate);
     }
-    if (charSetTrim(curVal, "a-z").length != 0) {
-        curVal = charSetTrim(curVal.toLowerCase(), regCharSet);
+    if (lib.charSetTrim(curVal, "a-z").length != 0) {
+        curVal = lib.charSetTrim(curVal.toLowerCase(), regCharSet);
         var vArr = (curVal.indexOf("-") > -1) ? curVal.split("-") : [curVal];
         for (var i = 0; i < vArr.length; i++) {
             var vIt = vArr[i].replace(/'/g, ""); //Apostrophes are the last exception of punctuation in a word I can think of

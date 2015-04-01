@@ -218,9 +218,9 @@ function learn(dataArr) {
                     }
                     if (!isNaN(touchFlag)) {
                         if (touchFlag == 0) {
-                            oBeta.noise.splice.apply(oBeta.noise, [oBeta.noise.length-1, 1].concat(splitArr(oBeta.noise[oBeta.noise.length-1], oBeta.noise[oBeta.noise.length-1].length-8, oBeta.noise[oBeta.noise.length-1].length)));
-                            oGamma.noise.splice.apply(oGamma.noise, [oGamma.noise.length-1, 1].concat(splitArr(oGamma.noise[oGamma.noise.length-1], oGamma.noise[oGamma.noise.length-1].length-8, oGamma.noise[oGamma.noise.length-1].length)));
-                            aZY.noise.splice.apply(aZY.noise, [aZY.noise.length-1, 1].concat(splitArr(aZY.noise[aZY.noise.length-1], aZY.noise[aZY.noise.length-1].length-8, aZY.noise[aZY.noise.length-1].length)));
+                            oBeta.noise.splice.apply(oBeta.noise, [oBeta.noise.length-1, 1].concat(splitArr(oBeta.noise[oBeta.noise.length-1], oBeta.noise[oBeta.noise.length-1].length-trailLen+2, oBeta.noise[oBeta.noise.length-1].length)));
+                            oGamma.noise.splice.apply(oGamma.noise, [oGamma.noise.length-1, 1].concat(splitArr(oGamma.noise[oGamma.noise.length-1], oGamma.noise[oGamma.noise.length-1].length-trailLen+2, oGamma.noise[oGamma.noise.length-1].length)));
+                            aZY.noise.splice.apply(aZY.noise, [aZY.noise.length-1, 1].concat(splitArr(aZY.noise[aZY.noise.length-1], aZY.noise[aZY.noise.length-1].length-trailLen+2, aZY.noise[aZY.noise.length-1].length)));
                         } else {
                             touchFlag--;
                         }
